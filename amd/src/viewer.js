@@ -156,7 +156,7 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, St
                 '<div class="fp-viewer-content"></div>' +
             '</div>' +
             '<div class="fp-viewer-footer">' +
-                '<span class="fp-copyright-text">Submission file previewer ver 1.0.4 developed by Ferdiyanto Deni Sanjayaya (<a href="https://gridiyans.my.id" target="_blank" rel="noopener noreferrer">gridiyans.my.id</a>) &copy; 2026</span>' +
+                '<span class="fp-copyright-text">Submission file previewer ver 1.0.5 developed by Ferdiyanto Deni Sanjayaya (<a href="https://gridiyans.my.id" target="_blank" rel="noopener noreferrer">gridiyans.my.id</a>) &copy; 2026</span>' +
             '</div>' +
         '</div>';
 
@@ -252,32 +252,49 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, St
 
     ViewerInstance.prototype.renderPDF = function(url, content) {
         var self = this;
+        var file = (self.files && self.files[self.activeFileIndex]) || {};
         content.html('<div class="fp-loading-state"><div class="fp-spinner"></div><p>' + (strings.loading_doc || 'Memuat dokumen PDF...') + '</p></div>');
 
-        fetch(url, { credentials: 'include' })
-            .then(function(res) {
-                if (!res.ok) {
-                    throw new Error('HTTP ' + res.status);
+        function fetchPDFBuffer(targetUrl) {
+            return fetch(targetUrl, { credentials: 'include' })
+                .then(function(res) {
+                    if (!res.ok) {
+                        throw new Error('HTTP ' + res.status);
+                    }
+                    return res.arrayBuffer();
+                })
+                .then(function(buffer) {
+                    var bytes = new Uint8Array(buffer);
+                    var headerStr = '';
+                    for (var i = 0; i < Math.min(bytes.length, 8); i++) {
+                        headerStr += String.fromCharCode(bytes[i]);
+                    }
+
+                    if (headerStr.indexOf('%PDF') === -1) {
+                        var decoder = new TextDecoder('utf-8');
+                        var snippet = decoder.decode(bytes.subarray(0, 300));
+                        console.warn('Non-PDF response from:', targetUrl, snippet);
+                        throw new Error('Respon server bukan file PDF valid.');
+                    }
+
+                    return { buffer: buffer, bytes: bytes };
+                });
+        }
+
+        // Try primary URL, then retry with file.downloadurl if different
+        fetchPDFBuffer(url)
+            .catch(function(firstErr) {
+                if (file.downloadurl && file.downloadurl !== url) {
+                    console.info('Retrying PDF fetch using fallback downloadurl:', file.downloadurl);
+                    return fetchPDFBuffer(file.downloadurl);
                 }
-                return res.arrayBuffer();
+                throw firstErr;
             })
-            .then(function(buffer) {
-                var bytes = new Uint8Array(buffer);
+            .then(function(result) {
+                var bytes = result.bytes;
+                var buffer = result.buffer;
 
-                // Verify PDF signature (%PDF)
-                var headerStr = '';
-                for (var i = 0; i < Math.min(bytes.length, 8); i++) {
-                    headerStr += String.fromCharCode(bytes[i]);
-                }
-
-                if (headerStr.indexOf('%PDF') === -1) {
-                    var decoder = new TextDecoder('utf-8');
-                    var snippet = decoder.decode(bytes.subarray(0, 500));
-                    console.warn('Non-PDF response detected from stream URL:', snippet);
-                    throw new Error('Respon server bukan file PDF valid (kemungkinan sesi login atau izin akses).');
-                }
-
-                // 1. Primary renderer: Mozilla PDF.js on HTML5 canvas (no browser PDF plugin dependencies)
+                // 1. Primary renderer: Mozilla PDF.js on HTML5 canvas
                 return ensurePDF().then(function(pdfjsLib) {
                     var loadingTask = pdfjsLib.getDocument({
                         data: bytes,
@@ -309,15 +326,16 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, St
             })
             .catch(function(err) {
                 console.error('PDF preview error:', err);
+                var directUrl = file.downloadurl || file.url || url;
                 content.html(
                     '<div class="fp-error-state">' +
                         '<i class="fa fa-exclamation-triangle fa-2x text-warning mb-2"></i>' +
                         '<p>Gagal memuat dokumen PDF: ' + escapeHtml(err.message) + '</p>' +
                         '<div class="mt-3">' +
-                            '<a href="' + url + '" target="_blank" class="btn btn-outline-primary btn-sm mr-2 me-2">' +
+                            '<a href="' + directUrl + '" target="_blank" class="btn btn-outline-primary btn-sm mr-2 me-2">' +
                                 '<i class="fa fa-external-link"></i> Buka di Tab Baru' +
                             '</a>' +
-                            '<a href="' + url + '" class="btn btn-primary btn-sm">' +
+                            '<a href="' + directUrl + '" class="btn btn-primary btn-sm">' +
                                 '<i class="fa fa-download"></i> Unduh Berkas' +
                             '</a>' +
                         '</div>' +
@@ -557,10 +575,7 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, St
                 var extMatch = fn.match(/\.(pdf|docx|pptx|xlsx|xls|csv|txt|doc|ppt)$/i);
                 if (extMatch) {
                     var hr = a.attr('href') || '';
-                    if (/\.(svg|png|jpg|jpeg|gif)$/i.test(hr)) return;
-                    var streamUrl = hr.replace('/assignsubmission_file/submission_files/', '/assignsubmission_filepreview/submission_files/');
-                    streamUrl = streamUrl.replace(/([?&])forcedownload=1(&|$)/, '$1').replace(/[?&]$/, '');
-                    streamUrl += (streamUrl.indexOf('?') !== -1 ? '&' : '?') + 'preview=1';
+                    var streamUrl = hr;
                     files.push({
                         filename: fn,
                         url: streamUrl,
@@ -602,12 +617,8 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, St
             }
             var extMatch = filename.match(/\.(pdf|docx|pptx|xlsx|xls|csv|txt|doc|ppt)$/i);
             if (extMatch) {
-                a.addClass('fp-enhanced');
                 var ext = extMatch[1].toLowerCase();
-                var streamUrl = href.replace('/assignsubmission_file/submission_files/', '/assignsubmission_filepreview/submission_files/');
-                streamUrl = streamUrl.replace(/([?&])forcedownload=1(&|$)/, '$1').replace(/[?&]$/, '');
-                streamUrl += (streamUrl.indexOf('?') !== -1 ? '&' : '?') + 'preview=1';
-
+                var streamUrl = href;
                 var btn = $('<button type="button" class="btn btn-sm btn-outline-primary py-0 px-1 ml-1 ms-1 fp-auto-preview-btn" title="' + (strings.preview || 'Preview') + '">' +
                     '<i class="fa fa-eye"></i> ' + (strings.preview || 'Preview') +
                 '</button>');

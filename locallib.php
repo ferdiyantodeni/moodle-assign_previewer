@@ -323,11 +323,11 @@ class assign_submission_filepreview extends assign_submission_plugin {
             $component = $file->get_component();
             $filearea = $file->get_filearea();
 
-            // Always route preview stream through assignsubmission_filepreview so it can be streamed inline.
+            // Use native component and filearea so Moodle access permissions work 100%.
             $fileurl = moodle_url::make_pluginfile_url(
                 $contextid,
-                'assignsubmission_filepreview',
-                self::FILEAREA,
+                $component,
+                $filearea,
                 $submission->id,
                 $file->get_filepath(),
                 $filename,
@@ -393,7 +393,7 @@ class assign_submission_filepreview extends assign_submission_plugin {
             'count' => count($files),
             'graderurl' => $graderurl,
             'firstfile' => $files[0],
-            'json_files' => json_encode($files)
+            'json_files' => s(json_encode($files))
         ];
 
         return $OUTPUT->render_from_template('assignsubmission_filepreview/summary', $data);
@@ -420,7 +420,7 @@ class assign_submission_filepreview extends assign_submission_plugin {
             'userid' => $submission->userid,
             'files' => $files,
             'count' => count($files),
-            'json_files' => json_encode($files)
+            'json_files' => s(json_encode($files))
         ];
 
         return $OUTPUT->render_from_template('assignsubmission_filepreview/view', $data);
