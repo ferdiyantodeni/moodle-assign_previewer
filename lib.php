@@ -79,12 +79,17 @@ function assignsubmission_filepreview_pluginfile($course, $cm, $context, $filear
     $file = $fs->get_file($context->id, 'assignsubmission_filepreview', $filearea, $itemid, $filepath, $filename);
 
     if (!$file || $file->is_directory()) {
+        // Fallback: Check if file was submitted under standard assignsubmission_file.
+        $file = $fs->get_file($context->id, 'assignsubmission_file', $filearea, $itemid, $filepath, $filename);
+    }
+
+    if (!$file || $file->is_directory()) {
         return false;
     }
 
-    // Allow inline streaming for preview if requested or default.
+    // Allow inline streaming for preview without download dialog.
     $previewparam = optional_param('preview', 0, PARAM_INT);
-    if ($previewparam) {
+    if ($previewparam || !$forcedownload) {
         $forcedownload = false;
     }
 

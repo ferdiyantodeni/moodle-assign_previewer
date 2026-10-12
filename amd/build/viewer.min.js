@@ -156,7 +156,7 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, St
                 '<div class="fp-viewer-content"></div>' +
             '</div>' +
             '<div class="fp-viewer-footer">' +
-                '<span class="fp-copyright-text">Submission file previewer ver 1.0.2 developed by Ferdiyanto Deni Sanjayaya (<a href="https://gridiyan.my.id" target="_blank" rel="noopener noreferrer">gridiyan.my.id</a>) &copy; 2026</span>' +
+                '<span class="fp-copyright-text">Submission file previewer ver 1.0.3 developed by Ferdiyanto Deni Sanjayaya (<a href="https://gridiyans.my.id" target="_blank" rel="noopener noreferrer">gridiyans.my.id</a>) &copy; 2026</span>' +
             '</div>' +
         '</div>';
 
@@ -252,37 +252,31 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, St
 
     ViewerInstance.prototype.renderPDF = function(url, content) {
         var self = this;
-        ensurePDF().then(function(pdfjs) {
-            return pdfjs.getDocument({ url: url, withCredentials: true }).promise;
-        }).then(function(pdfDoc) {
-            content.empty();
-            var wrapper = $('<div class="pdf-render-wrapper"></div>');
-            content.append(wrapper);
+        content.html('<div class="fp-loading-state"><div class="fp-spinner"></div><p>' + (strings.loading_doc || 'Memuat dokumen PDF...') + '</p></div>');
 
-            var numPages = pdfDoc.numPages;
-            for (var p = 1; p <= numPages; p++) {
-                (function(pageNum) {
-                    var canvas = document.createElement('canvas');
-                    canvas.className = 'pdf-page-canvas';
-                    wrapper.append(canvas);
+        // Fetch PDF binary via authenticated request and render as an in-memory blob URL
+        fetch(url, { credentials: 'include' })
+            .then(function(res) {
+                if (!res.ok) {
+                    throw new Error('HTTP ' + res.status);
+                }
+                return res.blob();
+            })
+            .then(function(blob) {
+                var pdfBlob = new Blob([blob], { type: 'application/pdf' });
+                var blobUrl = URL.createObjectURL(pdfBlob);
+                if (!self.objectUrls) {
+                    self.objectUrls = [];
+                }
+                self.objectUrls.push(blobUrl);
 
-                    pdfDoc.getPage(pageNum).then(function(page) {
-                        var viewport = page.getViewport({ scale: 1.5 });
-                        canvas.height = viewport.height;
-                        canvas.width = viewport.width;
-
-                        var renderContext = {
-                            canvasContext: canvas.getContext('2d'),
-                            viewport: viewport
-                        };
-                        page.render(renderContext);
-                    });
-                })(p);
-            }
-        }).catch(function(err) {
-            // Fallback to native PDF iframe
-            content.html('<iframe src="' + url + '" style="width:100%; height:800px; border:none;"></iframe>');
-        });
+                content.empty();
+                var iframe = $('<iframe src="' + blobUrl + '#toolbar=1&navpanes=1" style="width:100%; height:100%; min-height:650px; border:none; background:#ffffff; border-radius:4px;" allowfullscreen></iframe>');
+                content.append(iframe);
+            })
+            .catch(function(err) {
+                content.html('<div class="fp-error-state"><i class="fa fa-exclamation-triangle fa-2x"></i><p>Gagal memuat PDF: ' + escapeHtml(err.message) + '</p><a href="' + url + '" class="btn btn-primary mt-2"><i class="fa fa-download"></i> Unduh Berkas</a></div>');
+            });
     };
 
     ViewerInstance.prototype.renderDocx = function(url, content) {
@@ -453,24 +447,55 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, St
             return false;
         }
 
-        // Check if there are submission preview items in page
+        var files = [];
+
+        // 1. Check if there are preview items from our plugin
         var summaryItem = $('.assignsubmission-filepreview-summary, .assignsubmission-filepreview-view');
-        if (summaryItem.length === 0) {
-            return false;
+        if (summaryItem.length > 0) {
+            var btn = summaryItem.find('.filepreview-open-btn').first();
+            var filesJson = btn.attr('data-files');
+            if (filesJson) {
+                try {
+                    files = JSON.parse(filesJson);
+                } catch (e) {}
+            }
         }
 
-        var btn = summaryItem.find('.filepreview-open-btn').first();
-        var filesJson = btn.attr('data-files');
-        if (!filesJson) return false;
+        // 2. If no files from our plugin, extract from standard submission links in grading panel
+        if (!files || files.length === 0) {
+            $('[data-region="grade-panel"] .fileuploadsubmission a, [data-region="grade-panel"] .assignsubmission_file a, .assignsubmission_file a, .fileuploadsubmission a').each(function() {
+                var a = $(this);
+                // Skip icons
+                if (a.find('img').length > 0 && !a.clone().children().remove().end().text().trim()) {
+                    return;
+                }
+                var fn = a.text().trim();
+                if (!fn || /\.(svg|png|jpg|jpeg|gif)$/i.test(fn)) {
+                    return;
+                }
+                var extMatch = fn.match(/\.(pdf|docx|pptx|xlsx|xls|csv|txt|doc|ppt)$/i);
+                if (extMatch) {
+                    var hr = a.attr('href') || '';
+                    if (/\.(svg|png|jpg|jpeg|gif)$/i.test(hr)) return;
+                    var streamUrl = hr.replace('/assignsubmission_file/submission_files/', '/assignsubmission_filepreview/submission_files/');
+                    streamUrl = streamUrl.replace(/([?&])forcedownload=1(&|$)/, '$1').replace(/[?&]$/, '');
+                    streamUrl += (streamUrl.indexOf('?') !== -1 ? '&' : '?') + 'preview=1';
+                    files.push({
+                        filename: fn,
+                        url: streamUrl,
+                        downloadurl: hr,
+                        extension: extMatch[1].toLowerCase(),
+                        filesize: ''
+                    });
+                }
+            });
+        }
 
-        try {
-            var files = JSON.parse(filesJson);
-            if (files && files.length > 0) {
-                reviewPanel.empty();
-                new ViewerInstance(reviewPanel, files);
-                return true;
-            }
-        } catch (e) {}
+        if (files && files.length > 0) {
+            reviewPanel.empty();
+            new ViewerInstance(reviewPanel, files);
+            return true;
+        }
 
         return false;
     }
@@ -485,12 +510,23 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, St
             if (a.hasClass('fp-enhanced') || a.closest('.assignsubmission-filepreview-summary').length > 0) {
                 return;
             }
+            // Skip icons
+            if (a.find('img').length > 0 && !a.clone().children().remove().end().text().trim()) {
+                return;
+            }
             var href = a.attr('href') || '';
             var filename = a.text().trim();
-            var extMatch = filename.match(/\.(pdf|docx|pptx|xlsx|xls|csv|txt|doc|ppt)$/i) || href.match(/\.(pdf|docx|pptx|xlsx|xls|csv|txt|doc|ppt)(\?|$)/i);
+            if (!filename || /\.(svg|png|jpg|jpeg|gif)$/i.test(filename) || /\.(svg|png|jpg|jpeg|gif)$/i.test(href)) {
+                return;
+            }
+            var extMatch = filename.match(/\.(pdf|docx|pptx|xlsx|xls|csv|txt|doc|ppt)$/i);
             if (extMatch) {
                 a.addClass('fp-enhanced');
                 var ext = extMatch[1].toLowerCase();
+                var streamUrl = href.replace('/assignsubmission_file/submission_files/', '/assignsubmission_filepreview/submission_files/');
+                streamUrl = streamUrl.replace(/([?&])forcedownload=1(&|$)/, '$1').replace(/[?&]$/, '');
+                streamUrl += (streamUrl.indexOf('?') !== -1 ? '&' : '?') + 'preview=1';
+
                 var btn = $('<button type="button" class="btn btn-sm btn-outline-primary py-0 px-1 ml-1 ms-1 fp-auto-preview-btn" title="' + (strings.preview || 'Preview') + '">' +
                     '<i class="fa fa-eye"></i> ' + (strings.preview || 'Preview') +
                 '</button>');
@@ -500,7 +536,7 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, St
                     e.stopPropagation();
                     var file = {
                         filename: filename,
-                        url: href + (href.indexOf('?') !== -1 ? '&preview=1' : '?preview=1'),
+                        url: streamUrl,
                         downloadurl: href,
                         extension: ext,
                         filesize: ''
