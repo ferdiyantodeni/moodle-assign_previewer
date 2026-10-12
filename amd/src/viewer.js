@@ -156,7 +156,7 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, St
                 '<div class="fp-viewer-content"></div>' +
             '</div>' +
             '<div class="fp-viewer-footer">' +
-                '<span class="fp-copyright-text">Submission file previewer ver 1.0.3 developed by Ferdiyanto Deni Sanjayaya (<a href="https://gridiyans.my.id" target="_blank" rel="noopener noreferrer">gridiyans.my.id</a>) &copy; 2026</span>' +
+                '<span class="fp-copyright-text">Submission file previewer ver 1.0.4 developed by Ferdiyanto Deni Sanjayaya (<a href="https://gridiyans.my.id" target="_blank" rel="noopener noreferrer">gridiyans.my.id</a>) &copy; 2026</span>' +
             '</div>' +
         '</div>';
 
@@ -254,29 +254,110 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, St
         var self = this;
         content.html('<div class="fp-loading-state"><div class="fp-spinner"></div><p>' + (strings.loading_doc || 'Memuat dokumen PDF...') + '</p></div>');
 
-        // Fetch PDF binary via authenticated request and render as an in-memory blob URL
         fetch(url, { credentials: 'include' })
             .then(function(res) {
                 if (!res.ok) {
                     throw new Error('HTTP ' + res.status);
                 }
-                return res.blob();
+                return res.arrayBuffer();
             })
-            .then(function(blob) {
-                var pdfBlob = new Blob([blob], { type: 'application/pdf' });
-                var blobUrl = URL.createObjectURL(pdfBlob);
-                if (!self.objectUrls) {
-                    self.objectUrls = [];
-                }
-                self.objectUrls.push(blobUrl);
+            .then(function(buffer) {
+                var bytes = new Uint8Array(buffer);
 
-                content.empty();
-                var iframe = $('<iframe src="' + blobUrl + '#toolbar=1&navpanes=1" style="width:100%; height:100%; min-height:650px; border:none; background:#ffffff; border-radius:4px;" allowfullscreen></iframe>');
-                content.append(iframe);
+                // Verify PDF signature (%PDF)
+                var headerStr = '';
+                for (var i = 0; i < Math.min(bytes.length, 8); i++) {
+                    headerStr += String.fromCharCode(bytes[i]);
+                }
+
+                if (headerStr.indexOf('%PDF') === -1) {
+                    var decoder = new TextDecoder('utf-8');
+                    var snippet = decoder.decode(bytes.subarray(0, 500));
+                    console.warn('Non-PDF response detected from stream URL:', snippet);
+                    throw new Error('Respon server bukan file PDF valid (kemungkinan sesi login atau izin akses).');
+                }
+
+                // 1. Primary renderer: Mozilla PDF.js on HTML5 canvas (no browser PDF plugin dependencies)
+                return ensurePDF().then(function(pdfjsLib) {
+                    var loadingTask = pdfjsLib.getDocument({
+                        data: bytes,
+                        disableFontFace: false
+                    });
+                    return loadingTask.promise;
+                }).then(function(pdfDoc) {
+                    content.empty();
+                    var pdfContainer = $('<div class="fp-pdf-container"></div>');
+                    content.append(pdfContainer);
+
+                    self.pdfDoc = pdfDoc;
+                    self.pdfContainer = pdfContainer;
+                    self.renderPDFPages(pdfDoc, pdfContainer);
+                }).catch(function(pdfJsErr) {
+                    console.warn('PDF.js rendering fallback to native embed:', pdfJsErr);
+                    // 2. Fallback: Clean Blob URL without URL fragment
+                    var pdfBlob = new Blob([buffer], { type: 'application/pdf' });
+                    var blobUrl = URL.createObjectURL(pdfBlob);
+                    if (!self.objectUrls) {
+                        self.objectUrls = [];
+                    }
+                    self.objectUrls.push(blobUrl);
+
+                    content.empty();
+                    var iframe = $('<iframe src="' + blobUrl + '" style="width:100%; height:100%; min-height:650px; border:none; background:#ffffff; border-radius:4px;" allowfullscreen></iframe>');
+                    content.append(iframe);
+                });
             })
             .catch(function(err) {
-                content.html('<div class="fp-error-state"><i class="fa fa-exclamation-triangle fa-2x"></i><p>Gagal memuat PDF: ' + escapeHtml(err.message) + '</p><a href="' + url + '" class="btn btn-primary mt-2"><i class="fa fa-download"></i> Unduh Berkas</a></div>');
+                console.error('PDF preview error:', err);
+                content.html(
+                    '<div class="fp-error-state">' +
+                        '<i class="fa fa-exclamation-triangle fa-2x text-warning mb-2"></i>' +
+                        '<p>Gagal memuat dokumen PDF: ' + escapeHtml(err.message) + '</p>' +
+                        '<div class="mt-3">' +
+                            '<a href="' + url + '" target="_blank" class="btn btn-outline-primary btn-sm mr-2 me-2">' +
+                                '<i class="fa fa-external-link"></i> Buka di Tab Baru' +
+                            '</a>' +
+                            '<a href="' + url + '" class="btn btn-primary btn-sm">' +
+                                '<i class="fa fa-download"></i> Unduh Berkas' +
+                            '</a>' +
+                        '</div>' +
+                    '</div>'
+                );
             });
+    };
+
+    ViewerInstance.prototype.renderPDFPages = function(pdfDoc, container) {
+        var numPages = pdfDoc.numPages;
+        container.empty();
+
+        for (var pageNum = 1; pageNum <= numPages; pageNum++) {
+            (function(pNum) {
+                var pageWrapper = $('<div class="fp-pdf-page-wrapper" id="fp-pdf-page-' + pNum + '"></div>');
+                var canvas = document.createElement('canvas');
+                canvas.className = 'fp-pdf-page-canvas';
+                pageWrapper.append(canvas);
+
+                var pageNumberBadge = $('<div class="fp-pdf-page-number">' + pNum + ' / ' + numPages + '</div>');
+                pageWrapper.append(pageNumberBadge);
+
+                container.append(pageWrapper);
+
+                pdfDoc.getPage(pNum).then(function(page) {
+                    var baseViewport = page.getViewport({ scale: 1.5 });
+                    canvas.height = baseViewport.height;
+                    canvas.width = baseViewport.width;
+
+                    var ctx = canvas.getContext('2d');
+                    var renderContext = {
+                        canvasContext: ctx,
+                        viewport: baseViewport
+                    };
+                    page.render(renderContext);
+                }).catch(function(pageErr) {
+                    console.error('Error rendering PDF page ' + pNum, pageErr);
+                });
+            })(pageNum);
+        }
     };
 
     ViewerInstance.prototype.renderDocx = function(url, content) {

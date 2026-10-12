@@ -46,7 +46,10 @@ function assignsubmission_filepreview_pluginfile($course, $cm, $context, $filear
     require_login($course, false, $cm);
 
     $itemid = (int)array_shift($args);
-    $filename = array_pop($args);
+    $rawfilename = array_pop($args);
+    $filename = clean_param($rawfilename, PARAM_FILE);
+    $decodedfilename = rawurldecode($rawfilename);
+
     $filepath = '/' . implode('/', $args) . '/';
     if ($filepath !== '//') {
         $filepath = clean_param($filepath, PARAM_PATH);
@@ -58,7 +61,10 @@ function assignsubmission_filepreview_pluginfile($course, $cm, $context, $filear
     $assign = new assign($context, $cm, $course);
 
     // Verify submission exists.
-    $submission = $DB->get_record('assign_submission', ['id' => $itemid, 'assignment' => $assign->get_instance()->id], '*', MUST_EXIST);
+    $submission = $DB->get_record('assign_submission', ['id' => $itemid, 'assignment' => $assign->get_instance()->id]);
+    if (!$submission) {
+        return false;
+    }
 
     // Permission checks: user is owner OR user can grade.
     $canview = false;
@@ -76,11 +82,43 @@ function assignsubmission_filepreview_pluginfile($course, $cm, $context, $filear
     }
 
     $fs = get_file_storage();
-    $file = $fs->get_file($context->id, 'assignsubmission_filepreview', $filearea, $itemid, $filepath, $filename);
+    $file = null;
 
+    // Search file across both assignsubmission_filepreview and standard assignsubmission_file.
+    $components = ['assignsubmission_filepreview', 'assignsubmission_file'];
+    $filenames_to_try = array_unique([$filename, $rawfilename, $decodedfilename, urldecode($rawfilename)]);
+
+    foreach ($components as $comp) {
+        foreach ($filenames_to_try as $fname) {
+            if (empty($fname)) {
+                continue;
+            }
+            $file = $fs->get_file($context->id, $comp, $filearea, $itemid, $filepath, $fname);
+            if ($file && !$file->is_directory()) {
+                break 2;
+            }
+        }
+    }
+
+    // Fallback: If not found by exact path, search all submission files in this area.
     if (!$file || $file->is_directory()) {
-        // Fallback: Check if file was submitted under standard assignsubmission_file.
-        $file = $fs->get_file($context->id, 'assignsubmission_file', $filearea, $itemid, $filepath, $filename);
+        foreach ($components as $comp) {
+            $areafiles = $fs->get_area_files($context->id, $comp, $filearea, $itemid, 'timemodified DESC', false);
+            foreach ($areafiles as $af) {
+                $afname = $af->get_filename();
+                foreach ($filenames_to_try as $fname) {
+                    if (strcasecmp($afname, $fname) === 0) {
+                        $file = $af;
+                        break 3;
+                    }
+                }
+            }
+            // If only 1 file exists in this submission, use it as fallback.
+            if (!$file && count($areafiles) === 1) {
+                $file = reset($areafiles);
+                break;
+            }
+        }
     }
 
     if (!$file || $file->is_directory()) {
