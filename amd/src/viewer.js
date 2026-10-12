@@ -155,6 +155,9 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, St
             '<div class="fp-viewer-viewport">' +
                 '<div class="fp-viewer-content"></div>' +
             '</div>' +
+            '<div class="fp-viewer-footer">' +
+                '<span class="fp-copyright-text">Submission file previewer ver 1.0.0 developed by Ferdiyanto Deni Sanjayaya (<a href="https://gridiyan.my.id" target="_blank" rel="noopener noreferrer">gridiyan.my.id</a>) &copy; 2026</span>' +
+            '</div>' +
         '</div>';
 
         self.container.html(html);
