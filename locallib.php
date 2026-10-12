@@ -24,7 +24,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot . '/mod/assign/submissionplugin.php');
+require_once($CFG->dirroot . '/mod/assign/locallib.php');
 
 /**
  * File preview submission plugin class.
@@ -68,8 +68,9 @@ class assign_submission_filepreview extends assign_submission_plugin {
         $mform->hideIf('assignsubmission_filepreview_maxfiles', 'assignsubmission_filepreview_enabled', 'notchecked');
 
         // Max submission size bytes
-        $choices = get_max_upload_sizes($CFG->maxbytes, $COURSE->maxbytes);
-        $choices[0] = get_string('courseuploadlimit') . ' (' . display_size($COURSE->maxbytes) . ')';
+        $coursebytes = isset($COURSE->maxbytes) ? $COURSE->maxbytes : 0;
+        $choices = get_max_upload_sizes($CFG->maxbytes, $coursebytes);
+        $choices[0] = get_string('courseuploadlimit') . ($coursebytes ? ' (' . display_size($coursebytes) . ')' : '');
         $mform->addElement(
             'select',
             'assignsubmission_filepreview_maxsizebytes',
@@ -81,7 +82,6 @@ class assign_submission_filepreview extends assign_submission_plugin {
         $mform->hideIf('assignsubmission_filepreview_maxsizebytes', 'assignsubmission_filepreview_enabled', 'notchecked');
 
         // Accepted file types
-        $filetypesutil = new \core_form\filetypes_util();
         $defaulttypes = $this->get_config('filetypes') ?: '.pdf, .docx, .doc, .pptx, .ppt, .xlsx, .xls, .csv, .txt';
         $mform->addElement(
             'text',
@@ -117,7 +117,7 @@ class assign_submission_filepreview extends assign_submission_plugin {
 
         $maxbytes = $this->get_config('maxsubmissionsizebytes');
         if (empty($maxbytes)) {
-            $maxbytes = $COURSE->maxbytes;
+            $maxbytes = isset($COURSE->maxbytes) ? $COURSE->maxbytes : 0;
         }
 
         $filetypes = $this->get_config('filetypes');
