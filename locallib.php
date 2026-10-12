@@ -229,7 +229,7 @@ class assign_submission_filepreview extends assign_submission_plugin {
      */
     public function get_files(stdClass $submission, stdClass $user) {
         $fs = get_file_storage();
-        return $fs->get_area_files(
+        $files = $fs->get_area_files(
             $this->assignment->get_context()->id,
             'assignsubmission_filepreview',
             self::FILEAREA,
@@ -237,6 +237,20 @@ class assign_submission_filepreview extends assign_submission_plugin {
             'timemodified',
             false
         );
+
+        // Fallback: If no files found, check if student submitted via standard Moodle assignsubmission_file.
+        if (empty($files)) {
+            $files = $fs->get_area_files(
+                $this->assignment->get_context()->id,
+                'assignsubmission_file',
+                'submission_files',
+                $submission->id,
+                'timemodified',
+                false
+            );
+        }
+
+        return $files;
     }
 
     /**
@@ -255,12 +269,14 @@ class assign_submission_filepreview extends assign_submission_plugin {
         foreach ($files as $file) {
             $filename = $file->get_filename();
             $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+            $component = $file->get_component();
+            $filearea = $file->get_filearea();
 
             // Generate clean inline stream URL with preview=1.
             $fileurl = moodle_url::make_pluginfile_url(
                 $contextid,
-                'assignsubmission_filepreview',
-                self::FILEAREA,
+                $component,
+                $filearea,
                 $submission->id,
                 $file->get_filepath(),
                 $filename,
@@ -269,8 +285,8 @@ class assign_submission_filepreview extends assign_submission_plugin {
 
             $downloadurl = moodle_url::make_pluginfile_url(
                 $contextid,
-                'assignsubmission_filepreview',
-                self::FILEAREA,
+                $component,
+                $filearea,
                 $submission->id,
                 $file->get_filepath(),
                 $filename,
@@ -398,3 +414,4 @@ class assign_submission_filepreview extends assign_submission_plugin {
         return true;
     }
 }
+

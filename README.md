@@ -108,3 +108,4 @@ filepreview/
 ## 🔒 Privasi dan Lisensi
 - Berlisensi **GNU GPL v3 or later**.
 - Mendukung penuh Moodle Privacy API untuk ekspor dan penghapusan data pengguna sesuai regulasi privasi.
+

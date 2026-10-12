@@ -33,3 +33,4 @@ defined('MOODLE_INTERNAL') || die();
 function xmldb_assignsubmission_filepreview_upgrade($oldversion) {
     return true;
 }
+

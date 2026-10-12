@@ -61,3 +61,4 @@ $string['quick_grade_save'] = 'Simpan Nilai';
 // Privacy
 $string['privacy:metadata:filepurpose'] = 'Berkas yang diunggah siswa untuk tugas dengan dukungan pratinjau dokumen.';
 $string['privacy:path'] = 'submission_files';
+

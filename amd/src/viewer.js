@@ -472,6 +472,44 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, St
         return false;
     }
 
+    /**
+     * Enhance standard Moodle file links (assignsubmission_file) on the page.
+     * Allows teachers to preview files from older assignments without re-uploading!
+     */
+    function enhanceStandardFileLinks() {
+        $('.assignsubmission_file a, .fileuploadsubmission a, td.c4 a, td.c5 a').each(function() {
+            var a = $(this);
+            if (a.hasClass('fp-enhanced') || a.closest('.assignsubmission-filepreview-summary').length > 0) {
+                return;
+            }
+            var href = a.attr('href') || '';
+            var filename = a.text().trim();
+            var extMatch = filename.match(/\.(pdf|docx|pptx|xlsx|xls|csv|txt|doc|ppt)$/i) || href.match(/\.(pdf|docx|pptx|xlsx|xls|csv|txt|doc|ppt)(\?|$)/i);
+            if (extMatch) {
+                a.addClass('fp-enhanced');
+                var ext = extMatch[1].toLowerCase();
+                var btn = $('<button type="button" class="btn btn-sm btn-outline-primary py-0 px-1 ml-1 ms-1 fp-auto-preview-btn" title="' + (strings.preview || 'Preview') + '">' +
+                    '<i class="fa fa-eye"></i> ' + (strings.preview || 'Preview') +
+                '</button>');
+
+                btn.on('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    var file = {
+                        filename: filename,
+                        url: href + (href.indexOf('?') !== -1 ? '&preview=1' : '?preview=1'),
+                        downloadurl: href,
+                        extension: ext,
+                        filesize: ''
+                    };
+                    openSplitWorkspace([file], window.location.href, filename);
+                });
+
+                a.after(btn);
+            }
+        });
+    }
+
     return {
         init: function(config) {
             assetBaseUrl = config.assetbase || '';
@@ -480,7 +518,10 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, St
             // 1. Try mounting to native Grader review panel
             attachToMoodleGrader();
 
-            // 2. Delegate click on "Preview & Grade" button
+            // 2. Enhance standard Moodle file links if present
+            enhanceStandardFileLinks();
+
+            // 3. Delegate click on "Preview & Grade" button
             $(document).off('click.fp', '[data-action="open-preview"]').on('click.fp', '[data-action="open-preview"]', function(e) {
                 e.preventDefault();
                 var btn = $(this);
@@ -514,7 +555,7 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, St
                 openSplitWorkspace(files, graderUrl, studentName);
             });
 
-            // 3. Delegate click on quick view single file
+            // 4. Delegate click on quick view single file
             $(document).off('click.fp', '[data-action="quick-preview"]').on('click.fp', '[data-action="quick-preview"]', function(e) {
                 e.preventDefault();
                 var link = $(this);
@@ -531,3 +572,4 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, St
         }
     };
 });
+

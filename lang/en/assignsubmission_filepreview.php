@@ -61,3 +61,4 @@ $string['quick_grade_save'] = 'Save Grade';
 // Privacy
 $string['privacy:metadata:filepurpose'] = 'Files uploaded for assignment submission with preview support.';
 $string['privacy:path'] = 'submission_files';
+
