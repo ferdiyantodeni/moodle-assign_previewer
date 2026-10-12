@@ -51,9 +51,31 @@ class assign_submission_filepreview extends assign_submission_plugin {
     public function get_settings(MoodleQuickForm $mform) {
         global $CFG, $COURSE;
 
-        $defaultmaxfiles = $this->get_config('maxfiles') ?: 10;
+        // When creating a new assignment, $this->assignment does not have an instance yet.
+        // Calling $this->get_config() would throw a coding_exception, so we check has_instance().
+        if ($this->assignment->has_instance()) {
+            $defaultmaxfiles = $this->get_config('maxfiles');
+            $defaultmaxbytes = $this->get_config('maxsubmissionsizebytes');
+            $defaultfiletypes = $this->get_config('filetypes');
+        } else {
+            $defaultmaxfiles = get_config('assignsubmission_filepreview', 'maxfiles');
+            $defaultmaxbytes = get_config('assignsubmission_filepreview', 'maxbytes');
+            $defaultfiletypes = get_config('assignsubmission_filepreview', 'filetypes');
+        }
+
+        if (empty($defaultmaxfiles)) {
+            $defaultmaxfiles = 10;
+        }
+        if ($defaultmaxbytes === false || $defaultmaxbytes === null) {
+            $defaultmaxbytes = 0;
+        }
+        if (empty($defaultfiletypes)) {
+            $defaultfiletypes = '.pdf, .docx, .doc, .pptx, .ppt, .xlsx, .xls, .csv, .txt';
+        }
+
+        $sitemaxfiles = get_config('assignsubmission_filepreview', 'maxfiles') ?: 20;
         $options = [];
-        for ($i = 1; $i <= 20; $i++) {
+        for ($i = 1; $i <= $sitemaxfiles; $i++) {
             $options[$i] = $i;
         }
 
@@ -69,8 +91,8 @@ class assign_submission_filepreview extends assign_submission_plugin {
 
         // Max submission size bytes
         $coursebytes = isset($COURSE->maxbytes) ? $COURSE->maxbytes : 0;
-        $choices = get_max_upload_sizes($CFG->maxbytes, $coursebytes);
-        $choices[0] = get_string('courseuploadlimit') . ($coursebytes ? ' (' . display_size($coursebytes) . ')' : '');
+        $choices = get_max_upload_sizes($CFG->maxbytes, $coursebytes, 0, $defaultmaxbytes);
+
         $mform->addElement(
             'select',
             'assignsubmission_filepreview_maxsizebytes',
@@ -78,11 +100,10 @@ class assign_submission_filepreview extends assign_submission_plugin {
             $choices
         );
         $mform->addHelpButton('assignsubmission_filepreview_maxsizebytes', 'maxsubmissionsizebytes', 'assignsubmission_filepreview');
-        $mform->setDefault('assignsubmission_filepreview_maxsizebytes', $this->get_config('maxsubmissionsizebytes') ?: 0);
+        $mform->setDefault('assignsubmission_filepreview_maxsizebytes', $defaultmaxbytes);
         $mform->hideIf('assignsubmission_filepreview_maxsizebytes', 'assignsubmission_filepreview_enabled', 'notchecked');
 
         // Accepted file types
-        $defaulttypes = $this->get_config('filetypes') ?: '.pdf, .docx, .doc, .pptx, .ppt, .xlsx, .xls, .csv, .txt';
         $mform->addElement(
             'text',
             'assignsubmission_filepreview_filetypes',
@@ -90,7 +111,7 @@ class assign_submission_filepreview extends assign_submission_plugin {
         );
         $mform->addHelpButton('assignsubmission_filepreview_filetypes', 'acceptedfiletypes', 'assignsubmission_filepreview');
         $mform->setType('assignsubmission_filepreview_filetypes', PARAM_RAW);
-        $mform->setDefault('assignsubmission_filepreview_filetypes', $defaulttypes);
+        $mform->setDefault('assignsubmission_filepreview_filetypes', $defaultfiletypes);
         $mform->hideIf('assignsubmission_filepreview_filetypes', 'assignsubmission_filepreview_enabled', 'notchecked');
     }
 
@@ -115,20 +136,37 @@ class assign_submission_filepreview extends assign_submission_plugin {
     private function get_file_options() {
         global $COURSE;
 
-        $maxbytes = $this->get_config('maxsubmissionsizebytes');
+        $maxbytes = 0;
+        if ($this->assignment->has_instance()) {
+            $maxbytes = $this->get_config('maxsubmissionsizebytes');
+        }
         if (empty($maxbytes)) {
-            $maxbytes = isset($COURSE->maxbytes) ? $COURSE->maxbytes : 0;
+            $maxbytes = get_config('assignsubmission_filepreview', 'maxbytes');
+            if (empty($maxbytes)) {
+                $maxbytes = isset($COURSE->maxbytes) ? $COURSE->maxbytes : 0;
+            }
         }
 
-        $filetypes = $this->get_config('filetypes');
+        $maxfiles = 10;
+        if ($this->assignment->has_instance()) {
+            $maxfiles = $this->get_config('maxfiles');
+        }
+        if (empty($maxfiles)) {
+            $maxfiles = get_config('assignsubmission_filepreview', 'maxfiles') ?: 10;
+        }
+
+        $filetypes = '';
+        if ($this->assignment->has_instance()) {
+            $filetypes = $this->get_config('filetypes');
+        }
         if (empty($filetypes)) {
-            $filetypes = ['document', 'presentation', 'spreadsheet', '.pdf', '.txt'];
+            $filetypes = get_config('assignsubmission_filepreview', 'filetypes') ?: '.pdf, .docx, .doc, .pptx, .ppt, .xlsx, .xls, .csv, .txt';
         }
 
         return [
             'subdirs' => 0,
             'maxbytes' => $maxbytes,
-            'maxfiles' => (int)($this->get_config('maxfiles') ?: 10),
+            'maxfiles' => (int)$maxfiles,
             'accepted_types' => $filetypes,
             'return_types' => FILE_INTERNAL
         ];
@@ -137,23 +175,26 @@ class assign_submission_filepreview extends assign_submission_plugin {
     /**
      * Add form elements for student submission.
      *
-     * @param stdClass|null $submission
+     * @param mixed $submission stdClass|null
      * @param MoodleQuickForm $mform
      * @param stdClass $data
      * @return bool
      */
-    public function get_form_elements_for_user($submission, MoodleQuickForm $mform, stdClass $data) {
+    public function get_form_elements($submission, MoodleQuickForm $mform, stdClass $data) {
+        $fileoptions = $this->get_file_options();
+        $submissionid = $submission ? $submission->id : 0;
+
         $data = file_prepare_standard_filemanager(
             $data,
             'files',
-            $this->get_file_options(),
+            $fileoptions,
             $this->assignment->get_context(),
             'assignsubmission_filepreview',
             self::FILEAREA,
-            $submission ? $submission->id : null
+            $submissionid
         );
 
-        $mform->addElement('filemanager', 'files_filemanager', $this->get_name(), null, $this->get_file_options());
+        $mform->addElement('filemanager', 'files_filemanager', $this->get_name(), null, $fileoptions);
         return true;
     }
 
@@ -167,10 +208,12 @@ class assign_submission_filepreview extends assign_submission_plugin {
     public function save(stdClass $submission, stdClass $data) {
         global $DB;
 
+        $fileoptions = $this->get_file_options();
+
         $data = file_postupdate_standard_filemanager(
             $data,
             'files',
-            $this->get_file_options(),
+            $fileoptions,
             $this->assignment->get_context(),
             'assignsubmission_filepreview',
             self::FILEAREA,
@@ -202,22 +245,30 @@ class assign_submission_filepreview extends assign_submission_plugin {
      * @return bool
      */
     public function is_empty(stdClass $submission) {
-        return $this->submission_is_empty($submission);
+        return count($this->get_files($submission, new stdClass())) == 0;
     }
 
     /**
-     * Check if submission has no files.
+     * Determine if a submission made before saving is empty.
      *
-     * @param stdClass $submission
+     * @param stdClass $data The form data containing draftitemid
      * @return bool
      */
-    public function submission_is_empty(stdClass $submission) {
-        global $DB;
-        $record = $DB->get_record('assignsubmission_filepreview', ['submission' => $submission->id]);
-        if ($record) {
-            return $record->numfiles == 0;
+    public function submission_is_empty(stdClass $data) {
+        global $USER;
+        if (empty($data->files_filemanager)) {
+            return true;
         }
-        return count($this->get_files($submission, new stdClass())) == 0;
+        $fs = get_file_storage();
+        $files = $fs->get_area_files(
+            context_user::instance($USER->id)->id,
+            'user',
+            'draft',
+            $data->files_filemanager,
+            'id',
+            false
+        );
+        return count($files) == 0;
     }
 
     /**
@@ -414,4 +465,3 @@ class assign_submission_filepreview extends assign_submission_plugin {
         return true;
     }
 }
-

@@ -25,8 +25,8 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'assignsubmission_filepreview';
-$plugin->version = 2024101201;
+$plugin->version = 2024101202;
 $plugin->requires = 2023042400; // Requires Moodle 4.2+ (tested up to Moodle 5.x).
 $plugin->maturity = MATURITY_STABLE;
-$plugin->release = 'v1.0.1';
+$plugin->release = 'v1.0.2';
 
