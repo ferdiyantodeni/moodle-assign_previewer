@@ -1,0 +1,57 @@
+{{!
+    @template assignsubmission_filepreview/summary
+
+    Renders the submission file preview summary in the grading table.
+}}
+<div class="assignsubmission-filepreview-summary" data-submissionid="{{submissionid}}" data-userid="{{userid}}">
+    <div class="filepreview-header d-flex align-items-center mb-1">
+        <span class="badge badge-info bg-info text-white mr-2 me-2">
+            <i class="fa fa-files-o fa-paperclip" aria-hidden="true"></i> {{count}}
+        </span>
+        <button type="button" 
+                class="btn btn-sm btn-primary filepreview-open-btn d-inline-flex align-items-center gap-1"
+                data-action="open-preview"
+                data-submissionid="{{submissionid}}"
+                data-userid="{{userid}}"
+                data-files="{{#quote}}{{{json_files}}}{{/quote}}">
+            <i class="fa fa-search-plus fa-eye mr-1 me-1" aria-hidden="true"></i> {{#str}}preview_and_grade, assignsubmission_filepreview{{/str}}
+        </button>
+    </div>
+
+    <ul class="filepreview-list list-unstyled small mb-0">
+        {{#files}}
+        <li class="filepreview-item d-flex align-items-center py-1">
+            {{#is_pdf}}
+                <i class="fa fa-file-pdf-o text-danger mr-1 me-1" aria-hidden="true"></i>
+            {{/is_pdf}}
+            {{#is_word}}
+                <i class="fa fa-file-word-o text-primary mr-1 me-1" aria-hidden="true"></i>
+            {{/is_word}}
+            {{#is_excel}}
+                <i class="fa fa-file-excel-o text-success mr-1 me-1" aria-hidden="true"></i>
+            {{/is_excel}}
+            {{#is_pptx}}
+                <i class="fa fa-file-powerpoint-o text-warning mr-1 me-1" aria-hidden="true"></i>
+            {{/is_pptx}}
+            {{#is_text}}
+                <i class="fa fa-file-text-o text-secondary mr-1 me-1" aria-hidden="true"></i>
+            {{/is_text}}
+            {{#is_image}}
+                <i class="fa fa-file-image-o text-info mr-1 me-1" aria-hidden="true"></i>
+            {{/is_image}}
+
+            <a href="#" 
+               class="filepreview-quick-view text-truncate text-decoration-none mr-2 me-2 font-weight-bold fw-bold"
+               data-action="quick-preview"
+               data-fileurl="{{url}}"
+               data-filename="{{filename}}"
+               data-ext="{{extension}}"
+               data-downloadurl="{{downloadurl}}"
+               title="{{filename}}">
+                {{filename}}
+            </a>
+            <span class="text-muted ml-auto ms-auto font-italic small">({{filesize}})</span>
+        </li>
+        {{/files}}
+    </ul>
+</div>

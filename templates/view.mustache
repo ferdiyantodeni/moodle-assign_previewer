@@ -1,0 +1,66 @@
+{{!
+    @template assignsubmission_filepreview/view
+
+    Renders the detailed file list and preview buttons on the single submission view.
+}}
+<div class="assignsubmission-filepreview-view my-2" data-submissionid="{{submissionid}}" data-userid="{{userid}}">
+    <div class="card border-primary mb-3">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center py-2">
+            <h6 class="mb-0 font-weight-bold fw-bold text-primary">
+                <i class="fa fa-folder-open-o mr-1 me-1"></i> {{#str}}pluginname, assignsubmission_filepreview{{/str}} ({{count}})
+            </h6>
+            <button type="button" 
+                    class="btn btn-sm btn-primary filepreview-open-btn d-inline-flex align-items-center"
+                    data-action="open-preview"
+                    data-submissionid="{{submissionid}}"
+                    data-userid="{{userid}}">
+                <i class="fa fa-columns mr-1 me-1"></i> {{#str}}split_screen, assignsubmission_filepreview{{/str}}
+            </button>
+        </div>
+        <div class="card-body p-2">
+            <div class="list-group list-group-flush">
+                {{#files}}
+                <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center p-2">
+                    <div class="d-flex align-items-center text-truncate">
+                        {{#is_pdf}}
+                            <i class="fa fa-file-pdf-o fa-lg text-danger mr-2 me-2"></i>
+                        {{/is_pdf}}
+                        {{#is_word}}
+                            <i class="fa fa-file-word-o fa-lg text-primary mr-2 me-2"></i>
+                        {{/is_word}}
+                        {{#is_excel}}
+                            <i class="fa fa-file-excel-o fa-lg text-success mr-2 me-2"></i>
+                        {{/is_excel}}
+                        {{#is_pptx}}
+                            <i class="fa fa-file-powerpoint-o fa-lg text-warning mr-2 me-2"></i>
+                        {{/is_pptx}}
+                        {{#is_text}}
+                            <i class="fa fa-file-text-o fa-lg text-secondary mr-2 me-2"></i>
+                        {{/is_text}}
+                        {{#is_image}}
+                            <i class="fa fa-file-image-o fa-lg text-info mr-2 me-2"></i>
+                        {{/is_image}}
+
+                        <span class="font-weight-medium fw-medium text-truncate">{{filename}}</span>
+                        <span class="badge badge-light bg-light text-secondary border ml-2 ms-2">{{filesize}}</span>
+                    </div>
+                    <div class="btn-group btn-group-sm">
+                        <button type="button" 
+                                class="btn btn-outline-primary filepreview-quick-view"
+                                data-action="quick-preview"
+                                data-fileurl="{{url}}"
+                                data-filename="{{filename}}"
+                                data-ext="{{extension}}"
+                                data-downloadurl="{{downloadurl}}">
+                            <i class="fa fa-eye mr-1 me-1"></i> {{#str}}preview, assignsubmission_filepreview{{/str}}
+                        </button>
+                        <a href="{{downloadurl}}" class="btn btn-outline-secondary" title="{{#str}}download_fallback, assignsubmission_filepreview{{/str}}">
+                            <i class="fa fa-download"></i>
+                        </a>
+                    </div>
+                </div>
+                {{/files}}
+            </div>
+        </div>
+    </div>
+</div>
