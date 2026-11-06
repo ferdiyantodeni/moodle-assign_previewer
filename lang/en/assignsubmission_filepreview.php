@@ -69,6 +69,8 @@ $string['error_loading_word'] = 'Failed to load Word document: {$a}';
 $string['error_loading_excel'] = 'Failed to load Excel spreadsheet: {$a}';
 $string['error_loading_pptx'] = 'Failed to load PowerPoint presentation: {$a}';
 $string['error_loading_text'] = 'Failed to load text file: {$a}';
+$string['error_loading_image'] = 'Failed to load image: {$a}';
+$string['rotate_cw'] = 'Rotate 90° Clockwise';
 $string['error_loading_script'] = 'Failed to load script: {$a}';
 
 // Privacy Metadata

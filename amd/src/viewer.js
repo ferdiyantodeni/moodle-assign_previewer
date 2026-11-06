@@ -150,6 +150,7 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, St
         this.options = options || {};
         this.activeFileIndex = 0;
         this.currentZoom = 1.0;
+        this.imageRotation = 0;
         this.init();
     }
 
@@ -178,6 +179,7 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, St
                     '<span class="fp-zoom-text">100%</span>' +
                     '<button type="button" class="fp-btn fp-btn-icon fp-zoom-in" title="' + (strings.zoom_in || 'Zoom In') + '"><i class="fa fa-search-plus"></i></button>' +
                     '<button type="button" class="fp-btn fp-zoom-reset" title="' + (strings.zoom_reset || 'Reset') + '"><i class="fa fa-arrows-alt"></i></button>' +
+                    '<button type="button" class="fp-btn fp-btn-icon fp-rotate-btn" title="' + (strings.rotate_cw || 'Rotate 90°') + '" style="display:none;"><i class="fa fa-repeat fa-rotate-right"></i></button>' +
                     '<a href="#" target="_blank" class="fp-btn fp-download-btn" title="' + (strings.download || 'Download') + '"><i class="fa fa-download mr-1 me-1"></i> ' + (strings.download || 'Download') + '</a>' +
                     '<button type="button" class="fp-btn fp-btn-icon fp-fs-btn" title="' + (strings.fullscreen || 'Fullscreen') + '"><i class="fa fa-expand"></i></button>' +
                 '</div>' +
@@ -186,7 +188,7 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, St
                 '<div class="fp-viewer-content"></div>' +
             '</div>' +
             '<div class="fp-viewer-footer">' +
-                '<span class="fp-copyright-text">Submission file previewer ver 1.0.6 developed by Ferdiyanto Deni Sanjaya (<a href="https://gridiyans.my.id" target="_blank" rel="noopener noreferrer">gridiyans.my.id</a>) &copy; 2026</span>' +
+                '<span class="fp-copyright-text">Submission file previewer ver 1.0.7 developed by Ferdiyanto Deni Sanjaya (<a href="https://gridiyans.my.id" target="_blank" rel="noopener noreferrer">gridiyans.my.id</a>) &copy; 2026</span>' +
             '</div>' +
         '</div>';
 
@@ -210,6 +212,11 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, St
             self.setZoom(1.0);
         });
 
+        self.container.find('.fp-rotate-btn').on('click', function() {
+            self.imageRotation = (self.imageRotation + 90) % 360;
+            self.updateImageTransform();
+        });
+
         self.container.find('.fp-fs-btn').on('click', function() {
             var el = self.container[0];
             if (!document.fullscreenElement) {
@@ -224,6 +231,13 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, St
                 }
             }
         });
+    };
+
+    ViewerInstance.prototype.updateImageTransform = function() {
+        var img = this.container.find('.fp-image-element');
+        if (img.length > 0) {
+            img.css('transform', 'rotate(' + this.imageRotation + 'deg)');
+        }
     };
 
     ViewerInstance.prototype.setZoom = function(scale) {
@@ -243,7 +257,16 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, St
 
         self.activeFileIndex = index;
         self.setZoom(1.0);
+        self.imageRotation = 0;
         var file = self.files[index];
+        var ext = (file.extension || '').toLowerCase();
+        var isImg = file.is_image || ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'bmp', 'ico', 'tif', 'tiff'].indexOf(ext) !== -1;
+
+        if (isImg) {
+            self.container.find('.fp-rotate-btn').show();
+        } else {
+            self.container.find('.fp-rotate-btn').hide();
+        }
 
         // Update download button
         self.container.find('.fp-download-btn').attr('href', file.downloadurl || file.url);
@@ -277,7 +300,7 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, St
             self.renderText(file.url, content);
         }
         // 6. Image
-        else if (file.is_image || ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'].indexOf(ext) !== -1) {
+        else if (file.is_image || ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'bmp', 'ico', 'tif', 'tiff'].indexOf(ext) !== -1) {
             self.renderImage(file.url, content);
         }
         // 7. Unsupported fallback
@@ -513,9 +536,33 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, St
     };
 
     ViewerInstance.prototype.renderImage = function(url, content) {
-        content.empty();
-        var img = $('<img src="' + url + '" alt="Submission image" style="max-width: 100%; max-height: 80vh; object-fit: contain; box-shadow: 0 4px 15px rgba(0,0,0,0.3); border-radius: 4px;" />');
-        content.append(img);
+        var self = this;
+        var file = (self.files && self.files[self.activeFileIndex]) || {};
+        self.imageRotation = 0;
+        self.updateImageTransform();
+
+        content.html('<div class="fp-loading-state"><div class="fp-spinner"></div><p>' + (strings.loading_doc || 'Loading document...') + '</p></div>');
+
+        var wrapper = $('<div class="fp-image-container"></div>');
+        var img = $('<img class="fp-image-element" alt="' + escapeHtml(file.filename || 'Image') + '" />');
+
+        img.on('load', function() {
+            content.empty().append(wrapper.append(img));
+        });
+
+        img.on('error', function() {
+            var errMsg = formatStr(strings.error_loading_image || 'Failed to load image: {$a}', escapeHtml(file.filename || ''));
+            var errHtml = '<div class="fp-error-state">' +
+                '<i class="fa fa-file-image-o fa-3x mb-2 text-warning"></i>' +
+                '<p>' + errMsg + '</p>' +
+                '<a href="' + (file.downloadurl || url) + '" class="btn btn-primary mt-2">' +
+                    '<i class="fa fa-download mr-1 me-1"></i> ' + (strings.download || 'Download File') +
+                '</a>' +
+            '</div>';
+            content.html(errHtml);
+        });
+
+        img.attr('src', url);
     };
 
     ViewerInstance.prototype.renderUnsupported = function(file, content) {
@@ -606,17 +653,20 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, St
         if (!files || files.length === 0) {
             $('[data-region="grade-panel"] .fileuploadsubmission a, [data-region="grade-panel"] .assignsubmission_file a, .assignsubmission_file a, .fileuploadsubmission a').each(function() {
                 var a = $(this);
-                // Skip icons
+                // Skip icons without text
                 if (a.find('img').length > 0 && !a.clone().children().remove().end().text().trim()) {
                     return;
                 }
-                var fn = a.text().trim();
-                if (!fn || /\.(svg|png|jpg|jpeg|gif)$/i.test(fn)) {
+                var hr = a.attr('href') || '';
+                if (hr.indexOf('/theme/image.php') !== -1 || hr.indexOf('/pix/') !== -1) {
                     return;
                 }
-                var extMatch = fn.match(/\.(pdf|docx|pptx|xlsx|xls|csv|txt|doc|ppt)$/i);
+                var fn = a.text().trim();
+                if (!fn) {
+                    return;
+                }
+                var extMatch = fn.match(/\.(pdf|docx|pptx|xlsx|xls|csv|txt|doc|ppt|png|jpg|jpeg|gif|svg|webp|bmp|ico|tif|tiff)$/i);
                 if (extMatch) {
-                    var hr = a.attr('href') || '';
                     var streamUrl = hr;
                     files.push({
                         filename: fn,
@@ -648,16 +698,19 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, St
             if (a.hasClass('fp-enhanced') || a.closest('.assignsubmission-filepreview-summary').length > 0) {
                 return;
             }
-            // Skip icons
+            // Skip icons without text
             if (a.find('img').length > 0 && !a.clone().children().remove().end().text().trim()) {
                 return;
             }
             var href = a.attr('href') || '';
-            var filename = a.text().trim();
-            if (!filename || /\.(svg|png|jpg|jpeg|gif)$/i.test(filename) || /\.(svg|png|jpg|jpeg|gif)$/i.test(href)) {
+            if (href.indexOf('/theme/image.php') !== -1 || href.indexOf('/pix/') !== -1) {
                 return;
             }
-            var extMatch = filename.match(/\.(pdf|docx|pptx|xlsx|xls|csv|txt|doc|ppt)$/i);
+            var filename = a.text().trim();
+            if (!filename) {
+                return;
+            }
+            var extMatch = filename.match(/\.(pdf|docx|pptx|xlsx|xls|csv|txt|doc|ppt|png|jpg|jpeg|gif|svg|webp|bmp|ico|tif|tiff)$/i);
             if (extMatch) {
                 a.addClass('fp-enhanced');
                 var ext = extMatch[1].toLowerCase();

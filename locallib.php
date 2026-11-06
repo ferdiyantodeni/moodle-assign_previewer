@@ -355,7 +355,7 @@ class assign_submission_filepreview extends assign_submission_plugin {
                 'is_excel' => in_array($ext, ['xlsx', 'xls', 'csv']),
                 'is_pptx' => in_array($ext, ['pptx', 'ppt']),
                 'is_text' => in_array($ext, ['txt', 'md', 'html', 'json', 'xml', 'log', 'py', 'java', 'sql', 'c', 'cpp', 'php']),
-                'is_image' => in_array($ext, ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'])
+                'is_image' => in_array($ext, ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'bmp', 'ico', 'tif', 'tiff'])
             ];
         }
 
@@ -460,6 +460,8 @@ class assign_submission_filepreview extends assign_submission_plugin {
                 'error_loading_excel' => get_string('error_loading_excel', 'assignsubmission_filepreview', '{$a}'),
                 'error_loading_pptx' => get_string('error_loading_pptx', 'assignsubmission_filepreview', '{$a}'),
                 'error_loading_text' => get_string('error_loading_text', 'assignsubmission_filepreview', '{$a}'),
+                'error_loading_image' => get_string('error_loading_image', 'assignsubmission_filepreview', '{$a}'),
+                'rotate_cw' => get_string('rotate_cw', 'assignsubmission_filepreview'),
                 'error_loading_script' => get_string('error_loading_script', 'assignsubmission_filepreview', '{$a}')
             ]
         ];

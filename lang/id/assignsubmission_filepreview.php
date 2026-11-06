@@ -69,6 +69,8 @@ $string['error_loading_word'] = 'Gagal memuat dokumen Word: {$a}';
 $string['error_loading_excel'] = 'Gagal memuat Excel: {$a}';
 $string['error_loading_pptx'] = 'Gagal memuat PowerPoint: {$a}';
 $string['error_loading_text'] = 'Gagal memuat teks: {$a}';
+$string['error_loading_image'] = 'Gagal memuat gambar: {$a}';
+$string['rotate_cw'] = 'Putar 90° Searah Jarum Jam';
 $string['error_loading_script'] = 'Gagal memuat skrip: {$a}';
 
 // Privacy Metadata
