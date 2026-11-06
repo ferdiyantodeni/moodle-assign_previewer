@@ -1,10 +1,25 @@
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
 /**
  * Moodle assignsubmission_filepreview AMD module.
  * Provides client-side document viewing (Office docx, pptx, xlsx, PDF, TXT)
  * and Inline Split-Screen Grading integration.
  *
  * @module     assignsubmission_filepreview/viewer
- * @copyright  2024
+ * @copyright  2024 Ferdiyanto Deni Sanjaya
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 define(['jquery', 'core/notification', 'core/str'], function($, Notification, Str) {
@@ -14,6 +29,20 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, St
     var strings = {};
     var loadedScripts = {};
     var activeViewer = null;
+
+    /**
+     * Format a string template with placeholder replacements.
+     *
+     * @param {string} template Template string with {$a}
+     * @param {string} val Replacement value
+     * @returns {string}
+     */
+    function formatStr(template, val) {
+        if (!template) {
+            return val || '';
+        }
+        return template.replace('{$a}', val);
+    }
 
     /**
      * Dynamically load external JS script once.
@@ -35,7 +64,8 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, St
                 resolve();
             };
             script.onerror = function() {
-                reject(new Error('Gagal memuat skrip: ' + src));
+                var msg = formatStr(strings.error_loading_script || 'Failed to load script: {$a}', src);
+                reject(new Error(msg));
             };
             document.head.appendChild(script);
         });
@@ -71,7 +101,7 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, St
     }
 
     /**
-     * Ensure SheetJS (XLSX) is loaded.
+     * Ensure SheetJS (xlsx) is loaded.
      */
     function ensureXLSX() {
         if (window.XLSX) {
@@ -135,7 +165,7 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, St
         var html = '<div class="fp-viewer-container">' +
             '<div class="fp-viewer-toolbar">' +
                 '<div class="fp-toolbar-group">' +
-                    '<select class="fp-file-select" aria-label="Pilih berkas">';
+                    '<select class="fp-file-select" aria-label="' + (strings.select_file || 'Select file') + '">';
 
         self.files.forEach(function(f, idx) {
             html += '<option value="' + idx + '">' + escapeHtml(f.filename) + ' (' + f.filesize + ')</option>';
@@ -144,19 +174,19 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, St
         html +=     '</select>' +
                 '</div>' +
                 '<div class="fp-toolbar-group">' +
-                    '<button type="button" class="fp-btn fp-btn-icon fp-zoom-out" title="' + (strings.zoom_out || 'Perkecil') + '"><i class="fa fa-search-minus"></i></button>' +
+                    '<button type="button" class="fp-btn fp-btn-icon fp-zoom-out" title="' + (strings.zoom_out || 'Zoom Out') + '"><i class="fa fa-search-minus"></i></button>' +
                     '<span class="fp-zoom-text">100%</span>' +
-                    '<button type="button" class="fp-btn fp-btn-icon fp-zoom-in" title="' + (strings.zoom_in || 'Perbesar') + '"><i class="fa fa-search-plus"></i></button>' +
+                    '<button type="button" class="fp-btn fp-btn-icon fp-zoom-in" title="' + (strings.zoom_in || 'Zoom In') + '"><i class="fa fa-search-plus"></i></button>' +
                     '<button type="button" class="fp-btn fp-zoom-reset" title="' + (strings.zoom_reset || 'Reset') + '"><i class="fa fa-arrows-alt"></i></button>' +
-                    '<a href="#" target="_blank" class="fp-btn fp-download-btn" title="' + (strings.download || 'Unduh') + '"><i class="fa fa-download mr-1 me-1"></i> ' + (strings.download || 'Unduh') + '</a>' +
-                    '<button type="button" class="fp-btn fp-btn-icon fp-fs-btn" title="' + (strings.fullscreen || 'Layar Penuh') + '"><i class="fa fa-expand"></i></button>' +
+                    '<a href="#" target="_blank" class="fp-btn fp-download-btn" title="' + (strings.download || 'Download') + '"><i class="fa fa-download mr-1 me-1"></i> ' + (strings.download || 'Download') + '</a>' +
+                    '<button type="button" class="fp-btn fp-btn-icon fp-fs-btn" title="' + (strings.fullscreen || 'Fullscreen') + '"><i class="fa fa-expand"></i></button>' +
                 '</div>' +
             '</div>' +
             '<div class="fp-viewer-viewport">' +
                 '<div class="fp-viewer-content"></div>' +
             '</div>' +
             '<div class="fp-viewer-footer">' +
-                '<span class="fp-copyright-text">Submission file previewer ver 1.0.5 developed by Ferdiyanto Deni Sanjayaya (<a href="https://gridiyans.my.id" target="_blank" rel="noopener noreferrer">gridiyans.my.id</a>) &copy; 2026</span>' +
+                '<span class="fp-copyright-text">Submission file previewer ver 1.0.6 developed by Ferdiyanto Deni Sanjaya (<a href="https://gridiyans.my.id" target="_blank" rel="noopener noreferrer">gridiyans.my.id</a>) &copy; 2026</span>' +
             '</div>' +
         '</div>';
 
@@ -181,11 +211,17 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, St
         });
 
         self.container.find('.fp-fs-btn').on('click', function() {
-            var target = self.container.find('.fp-viewer-viewport')[0];
+            var el = self.container[0];
             if (!document.fullscreenElement) {
-                if (target.requestFullscreen) target.requestFullscreen();
+                if (el.requestFullscreen) {
+                    el.requestFullscreen();
+                } else if (el.webkitRequestFullscreen) {
+                    el.webkitRequestFullscreen();
+                }
             } else {
-                if (document.exitFullscreen) document.exitFullscreen();
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
             }
         });
     };
@@ -216,7 +252,7 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, St
         var viewport = self.container.find('.fp-viewer-viewport');
         var content = self.container.find('.fp-viewer-content');
 
-        content.html('<div class="fp-loading-state"><div class="fp-spinner"></div><p>' + (strings.loading_doc || 'Memuat dokumen...') + '</p></div>');
+        content.html('<div class="fp-loading-state"><div class="fp-spinner"></div><p>' + (strings.loading_doc || 'Loading document...') + '</p></div>');
 
         var ext = (file.extension || '').toLowerCase();
 
@@ -253,7 +289,7 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, St
     ViewerInstance.prototype.renderPDF = function(url, content) {
         var self = this;
         var file = (self.files && self.files[self.activeFileIndex]) || {};
-        content.html('<div class="fp-loading-state"><div class="fp-spinner"></div><p>' + (strings.loading_doc || 'Memuat dokumen PDF...') + '</p></div>');
+        content.html('<div class="fp-loading-state"><div class="fp-spinner"></div><p>' + (strings.loading_pdf || 'Loading PDF document...') + '</p></div>');
 
         function fetchPDFBuffer(targetUrl) {
             return fetch(targetUrl, { credentials: 'include' })
@@ -274,7 +310,7 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, St
                         var decoder = new TextDecoder('utf-8');
                         var snippet = decoder.decode(bytes.subarray(0, 300));
                         console.warn('Non-PDF response from:', targetUrl, snippet);
-                        throw new Error('Respon server bukan file PDF valid.');
+                        throw new Error(strings.invalid_pdf_response || 'The server response is not a valid PDF file.');
                     }
 
                     return { buffer: buffer, bytes: bytes };
@@ -294,11 +330,12 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, St
                 var bytes = result.bytes;
                 var buffer = result.buffer;
 
-                // 1. Primary renderer: Mozilla PDF.js on HTML5 canvas
+                // 1. Primary renderer: Mozilla PDF.js on HTML5 canvas with isEvalSupported: false for security
                 return ensurePDF().then(function(pdfjsLib) {
                     var loadingTask = pdfjsLib.getDocument({
                         data: bytes,
-                        disableFontFace: false
+                        disableFontFace: false,
+                        isEvalSupported: false
                     });
                     return loadingTask.promise;
                 }).then(function(pdfDoc) {
@@ -327,16 +364,17 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, St
             .catch(function(err) {
                 console.error('PDF preview error:', err);
                 var directUrl = file.downloadurl || file.url || url;
+                var errMsg = formatStr(strings.error_loading_pdf || 'Failed to load PDF document: {$a}', escapeHtml(err.message));
                 content.html(
                     '<div class="fp-error-state">' +
                         '<i class="fa fa-exclamation-triangle fa-2x text-warning mb-2"></i>' +
-                        '<p>Gagal memuat dokumen PDF: ' + escapeHtml(err.message) + '</p>' +
+                        '<p>' + errMsg + '</p>' +
                         '<div class="mt-3">' +
                             '<a href="' + directUrl + '" target="_blank" class="btn btn-outline-primary btn-sm mr-2 me-2">' +
-                                '<i class="fa fa-external-link"></i> Buka di Tab Baru' +
+                                '<i class="fa fa-external-link"></i> ' + (strings.open_in_new_tab || 'Open in New Tab') +
                             '</a>' +
                             '<a href="' + directUrl + '" class="btn btn-primary btn-sm">' +
-                                '<i class="fa fa-download"></i> Unduh Berkas' +
+                                '<i class="fa fa-download"></i> ' + (strings.download || 'Download File') +
                             '</a>' +
                         '</div>' +
                     '</div>'
@@ -395,7 +433,8 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, St
                 ignoreHeight: false
             });
         }).catch(function(err) {
-            content.html('<div class="fp-error-state"><i class="fa fa-exclamation-triangle fa-2x"></i><p>Gagal memuat dokumen Word: ' + escapeHtml(err.message) + '</p></div>');
+            var errMsg = formatStr(strings.error_loading_word || 'Failed to load Word document: {$a}', escapeHtml(err.message));
+            content.html('<div class="fp-error-state"><i class="fa fa-exclamation-triangle fa-2x"></i><p>' + errMsg + '</p></div>');
         });
     };
 
@@ -435,7 +474,8 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, St
                 renderSheet(wb.SheetNames[0]);
             }
         }).catch(function(err) {
-            content.html('<div class="fp-error-state"><i class="fa fa-exclamation-triangle fa-2x"></i><p>Gagal memuat Excel: ' + escapeHtml(err.message) + '</p></div>');
+            var errMsg = formatStr(strings.error_loading_excel || 'Failed to load Excel spreadsheet: {$a}', escapeHtml(err.message));
+            content.html('<div class="fp-error-state"><i class="fa fa-exclamation-triangle fa-2x"></i><p>' + errMsg + '</p></div>');
         });
     };
 
@@ -452,7 +492,8 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, St
             var viewer = new window.PPTXViewer(pptxDiv);
             return viewer.load(buffer);
         }).catch(function(err) {
-            content.html('<div class="fp-error-state"><i class="fa fa-exclamation-triangle fa-2x"></i><p>Gagal memuat PowerPoint: ' + escapeHtml(err.message) + '</p></div>');
+            var errMsg = formatStr(strings.error_loading_pptx || 'Failed to load PowerPoint presentation: {$a}', escapeHtml(err.message));
+            content.html('<div class="fp-error-state"><i class="fa fa-exclamation-triangle fa-2x"></i><p>' + errMsg + '</p></div>');
         });
     };
 
@@ -466,7 +507,8 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, St
             textDiv.text(text);
             content.append(textDiv);
         }).catch(function(err) {
-            content.html('<div class="fp-error-state"><i class="fa fa-exclamation-triangle fa-2x"></i><p>Gagal memuat teks: ' + escapeHtml(err.message) + '</p></div>');
+            var errMsg = formatStr(strings.error_loading_text || 'Failed to load text file: {$a}', escapeHtml(err.message));
+            content.html('<div class="fp-error-state"><i class="fa fa-exclamation-triangle fa-2x"></i><p>' + errMsg + '</p></div>');
         });
     };
 
@@ -480,9 +522,9 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, St
         var html = '<div class="fp-error-state">' +
             '<i class="fa fa-file-o fa-3x mb-2"></i>' +
             '<h5>' + escapeHtml(file.filename) + '</h5>' +
-            '<p class="text-muted">' + (strings.unsupported_format || 'Format file ini tidak mendukung pratinjau langsung di peramban.') + '</p>' +
+            '<p class="text-muted">' + (strings.unsupported_format || 'Direct preview is not available for this file type. Please click Download to view it.') + '</p>' +
             '<a href="' + (file.downloadurl || file.url) + '" class="btn btn-primary mt-2">' +
-                '<i class="fa fa-download mr-1 me-1"></i> ' + (strings.download || 'Unduh Berkas') +
+                '<i class="fa fa-download mr-1 me-1"></i> ' + (strings.download || 'Download File') +
             '</a>' +
         '</div>';
         content.html(html);
@@ -505,11 +547,11 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, St
             '<div class="fp-split-header">' +
                 '<h5 class="fp-split-title">' +
                     '<i class="fa fa-columns text-info"></i> ' +
-                    '<span>' + (strings.split_screen || 'Penilaian Layar Terpisah') + '</span>' +
+                    '<span>' + (strings.split_screen || 'Split Screen Grader') + '</span>' +
                     (studentName ? ' - <span class="text-light">' + escapeHtml(studentName) + '</span>' : '') +
                 '</h5>' +
                 '<div class="fp-split-actions">' +
-                    '<button type="button" class="fp-split-btn-close" title="' + (strings.close || 'Tutup') + '">' +
+                    '<button type="button" class="fp-split-btn-close" title="' + (strings.close || 'Close') + '">' +
                         '<i class="fa fa-times"></i>' +
                     '</button>' +
                 '</div>' +
@@ -518,7 +560,7 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, St
                 '<div class="fp-split-viewer-pane"></div>' +
                 '<div class="fp-split-grading-pane">' +
                     '<div class="fp-grading-pane-header">' +
-                        '<span><i class="fa fa-pencil-square-o mr-1 me-1"></i> ' + (strings.grade_panel_heading || 'Nilai & Umpan Balik') + '</span>' +
+                        '<span><i class="fa fa-pencil-square-o mr-1 me-1"></i> ' + (strings.grade_panel_heading || 'Grade & Feedback') + '</span>' +
                     '</div>' +
                     '<iframe class="fp-grading-iframe" src="' + graderUrl + '"></iframe>' +
                 '</div>' +
@@ -617,6 +659,7 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, St
             }
             var extMatch = filename.match(/\.(pdf|docx|pptx|xlsx|xls|csv|txt|doc|ppt)$/i);
             if (extMatch) {
+                a.addClass('fp-enhanced');
                 var ext = extMatch[1].toLowerCase();
                 var streamUrl = href;
                 var btn = $('<button type="button" class="btn btn-sm btn-outline-primary py-0 px-1 ml-1 ms-1 fp-auto-preview-btn" title="' + (strings.preview || 'Preview') + '">' +
@@ -697,10 +740,8 @@ define(['jquery', 'core/notification', 'core/str'], function($, Notification, St
                     extension: link.data('ext'),
                     filesize: ''
                 };
-                var graderUrl = window.location.href;
-                openSplitWorkspace([file], graderUrl, link.data('filename'));
+                openSplitWorkspace([file], window.location.href, '');
             });
         }
     };
 });
-

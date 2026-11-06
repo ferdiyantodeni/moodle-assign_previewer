@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<libraries>
+    <library>
+        <location>assets/vendor/pdf.min.js</location>
+        <name>PDF.js</name>
+        <version>4.2.67</version>
+        <license>Apache-2.0</license>
+        <repository>https://github.com/mozilla/pdf.js</repository>
+        <description>General-purpose, web standards-based platform for parsing and rendering PDFs.</description>
+    </library>
+    <library>
+        <location>assets/vendor/pdf.worker.min.js</location>
+        <name>PDF.js Worker</name>
+        <version>4.2.67</version>
+        <license>Apache-2.0</license>
+        <repository>https://github.com/mozilla/pdf.js</repository>
+        <description>Web Worker for PDF.js background processing.</description>
+    </library>
+    <library>
+        <location>assets/vendor/xlsx.full.min.js</location>
+        <name>SheetJS Community Edition</name>
+        <version>0.20.3</version>
+        <license>Apache-2.0</license>
+        <repository>https://github.com/SheetJS/sheetjs</repository>
+        <description>Spreadsheet data parser and generator.</description>
+    </library>
+    <library>
+        <location>assets/vendor/jszip.min.js</location>
+        <name>JSZip</name>
+        <version>3.10.1</version>
+        <license>MIT</license>
+        <repository>https://github.com/Stuk/jszip</repository>
+        <description>JavaScript library for creating, reading and editing .zip files.</description>
+    </library>
+    <library>
+        <location>assets/vendor/docx-preview.min.js</location>
+        <name>docx-preview</name>
+        <version>0.3.2</version>
+        <license>MIT</license>
+        <repository>https://github.com/VolodymyrBaydalka/docxjs</repository>
+        <description>Docx rendering library for browser.</description>
+    </library>
+    <library>
+        <location>assets/vendor/pptx-viewer.js</location>
+        <name>pptx-viewer</name>
+        <version>1.0.0</version>
+        <license>Apache-2.0</license>
+        <repository>https://github.com/ferdiyantodeni/moodle-assign_previewer</repository>
+        <description>PowerPoint (.pptx) lightweight presentation slide parser and DOM renderer.</description>
+    </library>
+</libraries>

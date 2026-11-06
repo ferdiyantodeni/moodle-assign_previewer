@@ -38,12 +38,17 @@ $string['filepreviewfilename'] = 'File';
 $string['numfilesforlog'] = 'Number of files: {$a}';
 $string['countfiles'] = '{$a} files';
 
+// Capabilities
+$string['filepreview:view'] = 'View file submission previews';
+$string['filepreview:exportownsubmission'] = 'Export own submission preview files';
+
 // Grader & Previewer UI
 $string['preview'] = 'Preview';
 $string['preview_and_grade'] = 'Preview & Grade';
 $string['split_screen'] = 'Split Screen Grader';
 $string['nofiles'] = 'No files submitted';
-$string['loading_doc'] = 'Loading document preview...';
+$string['loading_doc'] = 'Loading document...';
+$string['loading_pdf'] = 'Loading PDF document...';
 $string['close'] = 'Close';
 $string['zoom_in'] = 'Zoom In';
 $string['zoom_out'] = 'Zoom Out';
@@ -53,12 +58,22 @@ $string['download_fallback'] = 'Download File';
 $string['page'] = 'Page';
 $string['slide'] = 'Slide';
 $string['sheet'] = 'Sheet';
-$string['select_file'] = 'Select file to preview:';
+$string['select_file'] = 'Select file to preview';
 $string['unsupported_format'] = 'Direct preview is not available for this file type. Please click Download to view it.';
 $string['grade_panel_heading'] = 'Grade & Feedback';
 $string['quick_grade_save'] = 'Save Grade';
+$string['open_in_new_tab'] = 'Open in New Tab';
+$string['invalid_pdf_response'] = 'The server response is not a valid PDF file (access permissions or login session issue).';
+$string['error_loading_pdf'] = 'Failed to load PDF document: {$a}';
+$string['error_loading_word'] = 'Failed to load Word document: {$a}';
+$string['error_loading_excel'] = 'Failed to load Excel spreadsheet: {$a}';
+$string['error_loading_pptx'] = 'Failed to load PowerPoint presentation: {$a}';
+$string['error_loading_text'] = 'Failed to load text file: {$a}';
+$string['error_loading_script'] = 'Failed to load script: {$a}';
 
-// Privacy
+// Privacy Metadata
 $string['privacy:metadata:filepurpose'] = 'Files uploaded for assignment submission with preview support.';
+$string['privacy:metadata:assignment'] = 'The ID of the assignment.';
+$string['privacy:metadata:submission'] = 'The ID of the submission.';
+$string['privacy:metadata:numfiles'] = 'The number of files uploaded for this submission.';
 $string['privacy:path'] = 'submission_files';
-

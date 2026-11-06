@@ -437,8 +437,10 @@ class assign_submission_filepreview extends assign_submission_plugin {
             'assetbase' => $assetbase,
             'strings' => [
                 'preview' => get_string('preview', 'assignsubmission_filepreview'),
+                'preview_and_grade' => get_string('preview_and_grade', 'assignsubmission_filepreview'),
                 'split_screen' => get_string('split_screen', 'assignsubmission_filepreview'),
                 'loading_doc' => get_string('loading_doc', 'assignsubmission_filepreview'),
+                'loading_pdf' => get_string('loading_pdf', 'assignsubmission_filepreview'),
                 'close' => get_string('close', 'assignsubmission_filepreview'),
                 'zoom_in' => get_string('zoom_in', 'assignsubmission_filepreview'),
                 'zoom_out' => get_string('zoom_out', 'assignsubmission_filepreview'),
@@ -448,7 +450,17 @@ class assign_submission_filepreview extends assign_submission_plugin {
                 'page' => get_string('page', 'assignsubmission_filepreview'),
                 'slide' => get_string('slide', 'assignsubmission_filepreview'),
                 'sheet' => get_string('sheet', 'assignsubmission_filepreview'),
-                'unsupported_format' => get_string('unsupported_format', 'assignsubmission_filepreview')
+                'select_file' => get_string('select_file', 'assignsubmission_filepreview'),
+                'unsupported_format' => get_string('unsupported_format', 'assignsubmission_filepreview'),
+                'grade_panel_heading' => get_string('grade_panel_heading', 'assignsubmission_filepreview'),
+                'open_in_new_tab' => get_string('open_in_new_tab', 'assignsubmission_filepreview'),
+                'invalid_pdf_response' => get_string('invalid_pdf_response', 'assignsubmission_filepreview'),
+                'error_loading_pdf' => get_string('error_loading_pdf', 'assignsubmission_filepreview', '{$a}'),
+                'error_loading_word' => get_string('error_loading_word', 'assignsubmission_filepreview', '{$a}'),
+                'error_loading_excel' => get_string('error_loading_excel', 'assignsubmission_filepreview', '{$a}'),
+                'error_loading_pptx' => get_string('error_loading_pptx', 'assignsubmission_filepreview', '{$a}'),
+                'error_loading_text' => get_string('error_loading_text', 'assignsubmission_filepreview', '{$a}'),
+                'error_loading_script' => get_string('error_loading_script', 'assignsubmission_filepreview', '{$a}')
             ]
         ];
 

@@ -1,7 +1,27 @@
 {{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
     @template assignsubmission_filepreview/view
 
     Renders the detailed file list and preview buttons on the single submission view.
+
+    @package    assignsubmission_filepreview
+    @copyright  2024 Ferdiyanto Deni Sanjaya
+    @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
 }}
 <div class="assignsubmission-filepreview-view my-2" data-submissionid="{{submissionid}}" data-userid="{{userid}}">
     <div class="card border-primary mb-3">
@@ -41,21 +61,20 @@
                         {{#is_image}}
                             <i class="fa fa-file-image-o fa-lg text-info mr-2 me-2"></i>
                         {{/is_image}}
-
-                        <span class="font-weight-medium fw-medium text-truncate">{{filename}}</span>
-                        <span class="badge badge-light bg-light text-secondary border ml-2 ms-2">{{filesize}}</span>
+                        <a href="#" 
+                           class="filepreview-quick-view text-truncate text-dark font-weight-bold fw-bold text-decoration-none"
+                           data-action="quick-preview"
+                           data-fileurl="{{url}}"
+                           data-filename="{{filename}}"
+                           data-ext="{{extension}}"
+                           data-downloadurl="{{downloadurl}}"
+                           title="{{filename}}">
+                            {{filename}}
+                        </a>
+                        <span class="badge badge-secondary bg-secondary text-white ml-2 ms-2">{{filesize}}</span>
                     </div>
-                    <div class="btn-group btn-group-sm">
-                        <button type="button" 
-                                class="btn btn-outline-primary filepreview-quick-view"
-                                data-action="quick-preview"
-                                data-fileurl="{{url}}"
-                                data-filename="{{filename}}"
-                                data-ext="{{extension}}"
-                                data-downloadurl="{{downloadurl}}">
-                            <i class="fa fa-eye mr-1 me-1"></i> {{#str}}preview, assignsubmission_filepreview{{/str}}
-                        </button>
-                        <a href="{{downloadurl}}" class="btn btn-outline-secondary" title="{{#str}}download_fallback, assignsubmission_filepreview{{/str}}">
+                    <div>
+                        <a href="{{downloadurl}}" class="btn btn-sm btn-outline-secondary" title="{{#str}}download_fallback, assignsubmission_filepreview{{/str}}">
                             <i class="fa fa-download"></i>
                         </a>
                     </div>
@@ -65,4 +84,3 @@
         </div>
     </div>
 </div>
-
