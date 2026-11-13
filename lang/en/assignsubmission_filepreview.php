@@ -22,60 +22,54 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-$string['pluginname'] = 'File Submission with Document Preview';
-$string['enabled'] = 'File submission with document preview';
-$string['enabled_help'] = 'If enabled, students are able to upload files (Office, PDF, TXT) and teachers can preview them directly in the browser with split-screen grading.';
+$string['acceptedfiletypes'] = 'Accepted file types';
+$string['acceptedfiletypes_help'] = 'Specify allowed extensions (e.g. .pdf, .docx, .pptx, .xlsx, .txt). Leave empty to allow standard document types.';
+$string['close'] = 'Close';
+$string['countfiles'] = '{$a} files';
 $string['default'] = 'Enabled by default';
 $string['default_help'] = 'If set, this submission method will be enabled by default for all new assignments.';
+$string['download_fallback'] = 'Download File';
+$string['enabled'] = 'File submission with document preview';
+$string['enabled_help'] = 'If enabled, students are able to upload files (Office, PDF, TXT) and teachers can preview them directly in the browser with split-screen grading.';
+$string['error_loading_excel'] = 'Failed to load Excel spreadsheet: {$a}';
+$string['error_loading_image'] = 'Failed to load image: {$a}';
+$string['error_loading_pdf'] = 'Failed to load PDF document: {$a}';
+$string['error_loading_pptx'] = 'Failed to load PowerPoint presentation: {$a}';
+$string['error_loading_script'] = 'Failed to load script: {$a}';
+$string['error_loading_text'] = 'Failed to load text file: {$a}';
+$string['error_loading_word'] = 'Failed to load Word document: {$a}';
+$string['filepreview'] = 'File Preview';
+$string['filepreview:exportownsubmission'] = 'Export own submission preview files';
+$string['filepreview:view'] = 'View file submission previews';
+$string['filepreviewfilename'] = 'File';
+$string['fullscreen'] = 'Fullscreen';
+$string['grade_panel_heading'] = 'Grade & Feedback';
+$string['invalid_pdf_response'] = 'The server response is not a valid PDF file (access permissions or login session issue).';
+$string['loading_doc'] = 'Loading document...';
+$string['loading_pdf'] = 'Loading PDF document...';
 $string['maxfilessubmission'] = 'Maximum number of uploaded files';
 $string['maxfilessubmission_help'] = 'The maximum number of files each student can submit.';
 $string['maxsubmissionsizebytes'] = 'Maximum submission size';
 $string['maxsubmissionsizebytes_help'] = 'The maximum file size that can be uploaded.';
-$string['acceptedfiletypes'] = 'Accepted file types';
-$string['acceptedfiletypes_help'] = 'Specify allowed extensions (e.g. .pdf, .docx, .pptx, .xlsx, .txt). Leave empty to allow standard document types.';
-$string['filepreview'] = 'File Preview';
-$string['filepreviewfilename'] = 'File';
+$string['nofiles'] = 'No files submitted';
 $string['numfilesforlog'] = 'Number of files: {$a}';
-$string['countfiles'] = '{$a} files';
-
-// Capabilities
-$string['filepreview:view'] = 'View file submission previews';
-$string['filepreview:exportownsubmission'] = 'Export own submission preview files';
-
-// Grader & Previewer UI
+$string['open_in_new_tab'] = 'Open in New Tab';
+$string['page'] = 'Page';
+$string['pluginname'] = 'File Submission with Document Preview';
 $string['preview'] = 'Preview';
 $string['preview_and_grade'] = 'Preview & Grade';
+$string['privacy:metadata:assignment'] = 'The ID of the assignment.';
+$string['privacy:metadata:filepurpose'] = 'Files uploaded for assignment submission with preview support.';
+$string['privacy:metadata:numfiles'] = 'The number of files uploaded for this submission.';
+$string['privacy:metadata:submission'] = 'The ID of the submission.';
+$string['privacy:path'] = 'submission_files';
+$string['quick_grade_save'] = 'Save Grade';
+$string['rotate_cw'] = 'Rotate 90° Clockwise';
+$string['select_file'] = 'Select file to preview';
+$string['sheet'] = 'Sheet';
+$string['slide'] = 'Slide';
 $string['split_screen'] = 'Split Screen Grader';
-$string['nofiles'] = 'No files submitted';
-$string['loading_doc'] = 'Loading document...';
-$string['loading_pdf'] = 'Loading PDF document...';
-$string['close'] = 'Close';
+$string['unsupported_format'] = 'Direct preview is not available for this file type. Please click Download to view it.';
 $string['zoom_in'] = 'Zoom In';
 $string['zoom_out'] = 'Zoom Out';
 $string['zoom_reset'] = 'Reset Zoom';
-$string['fullscreen'] = 'Fullscreen';
-$string['download_fallback'] = 'Download File';
-$string['page'] = 'Page';
-$string['slide'] = 'Slide';
-$string['sheet'] = 'Sheet';
-$string['select_file'] = 'Select file to preview';
-$string['unsupported_format'] = 'Direct preview is not available for this file type. Please click Download to view it.';
-$string['grade_panel_heading'] = 'Grade & Feedback';
-$string['quick_grade_save'] = 'Save Grade';
-$string['open_in_new_tab'] = 'Open in New Tab';
-$string['invalid_pdf_response'] = 'The server response is not a valid PDF file (access permissions or login session issue).';
-$string['error_loading_pdf'] = 'Failed to load PDF document: {$a}';
-$string['error_loading_word'] = 'Failed to load Word document: {$a}';
-$string['error_loading_excel'] = 'Failed to load Excel spreadsheet: {$a}';
-$string['error_loading_pptx'] = 'Failed to load PowerPoint presentation: {$a}';
-$string['error_loading_text'] = 'Failed to load text file: {$a}';
-$string['error_loading_image'] = 'Failed to load image: {$a}';
-$string['rotate_cw'] = 'Rotate 90° Clockwise';
-$string['error_loading_script'] = 'Failed to load script: {$a}';
-
-// Privacy Metadata
-$string['privacy:metadata:filepurpose'] = 'Files uploaded for assignment submission with preview support.';
-$string['privacy:metadata:assignment'] = 'The ID of the assignment.';
-$string['privacy:metadata:submission'] = 'The ID of the submission.';
-$string['privacy:metadata:numfiles'] = 'The number of files uploaded for this submission.';
-$string['privacy:path'] = 'submission_files';

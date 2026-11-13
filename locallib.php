@@ -30,7 +30,6 @@ require_once($CFG->dirroot . '/mod/assign/locallib.php');
  * File preview submission plugin class.
  */
 class assign_submission_filepreview extends assign_submission_plugin {
-
     /** @var string File area for submission files */
     const FILEAREA = 'submission_files';
 
@@ -89,7 +88,7 @@ class assign_submission_filepreview extends assign_submission_plugin {
         $mform->setDefault('assignsubmission_filepreview_maxfiles', $defaultmaxfiles);
         $mform->hideIf('assignsubmission_filepreview_maxfiles', 'assignsubmission_filepreview_enabled', 'notchecked');
 
-        // Max submission size bytes
+        // Max submission size bytes.
         $coursebytes = isset($COURSE->maxbytes) ? $COURSE->maxbytes : 0;
         $choices = get_max_upload_sizes($CFG->maxbytes, $coursebytes, 0, $defaultmaxbytes);
 
@@ -99,11 +98,15 @@ class assign_submission_filepreview extends assign_submission_plugin {
             get_string('maxsubmissionsizebytes', 'assignsubmission_filepreview'),
             $choices
         );
-        $mform->addHelpButton('assignsubmission_filepreview_maxsizebytes', 'maxsubmissionsizebytes', 'assignsubmission_filepreview');
+        $mform->addHelpButton(
+            'assignsubmission_filepreview_maxsizebytes',
+            'maxsubmissionsizebytes',
+            'assignsubmission_filepreview'
+        );
         $mform->setDefault('assignsubmission_filepreview_maxsizebytes', $defaultmaxbytes);
         $mform->hideIf('assignsubmission_filepreview_maxsizebytes', 'assignsubmission_filepreview_enabled', 'notchecked');
 
-        // Accepted file types
+        // Accepted file types.
         $mform->addElement(
             'text',
             'assignsubmission_filepreview_filetypes',
@@ -160,7 +163,8 @@ class assign_submission_filepreview extends assign_submission_plugin {
             $filetypes = $this->get_config('filetypes');
         }
         if (empty($filetypes)) {
-            $filetypes = get_config('assignsubmission_filepreview', 'filetypes') ?: '.pdf, .docx, .doc, .pptx, .ppt, .xlsx, .xls, .csv, .txt';
+            $defaulttypes = '.pdf, .docx, .doc, .pptx, .ppt, .xlsx, .xls, .csv, .txt';
+            $filetypes = get_config('assignsubmission_filepreview', 'filetypes') ?: $defaulttypes;
         }
 
         return [
@@ -168,7 +172,7 @@ class assign_submission_filepreview extends assign_submission_plugin {
             'maxbytes' => $maxbytes,
             'maxfiles' => (int)$maxfiles,
             'accepted_types' => $filetypes,
-            'return_types' => FILE_INTERNAL
+            'return_types' => FILE_INTERNAL,
         ];
     }
 
@@ -354,8 +358,10 @@ class assign_submission_filepreview extends assign_submission_plugin {
                 'is_word' => in_array($ext, ['docx', 'doc']),
                 'is_excel' => in_array($ext, ['xlsx', 'xls', 'csv']),
                 'is_pptx' => in_array($ext, ['pptx', 'ppt']),
-                'is_text' => in_array($ext, ['txt', 'md', 'html', 'json', 'xml', 'log', 'py', 'java', 'sql', 'c', 'cpp', 'php']),
-                'is_image' => in_array($ext, ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'bmp', 'ico', 'tif', 'tiff'])
+                'is_text' => in_array($ext, [
+                    'txt', 'md', 'html', 'json', 'xml', 'log', 'py', 'java', 'sql', 'c', 'cpp', 'php',
+                ]),
+                'is_image' => in_array($ext, ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'bmp', 'ico', 'tif', 'tiff']),
             ];
         }
 
@@ -383,7 +389,7 @@ class assign_submission_filepreview extends assign_submission_plugin {
         $graderurl = (new moodle_url('/mod/assign/view.php', [
             'id' => $this->assignment->get_course_module()->id,
             'action' => 'grader',
-            'userid' => $submission->userid
+            'userid' => $submission->userid,
         ]))->out(false);
 
         $data = [
@@ -393,7 +399,7 @@ class assign_submission_filepreview extends assign_submission_plugin {
             'count' => count($files),
             'graderurl' => $graderurl,
             'firstfile' => $files[0],
-            'json_files' => s(json_encode($files))
+            'json_files' => s(json_encode($files)),
         ];
 
         return $OUTPUT->render_from_template('assignsubmission_filepreview/summary', $data);
@@ -420,7 +426,7 @@ class assign_submission_filepreview extends assign_submission_plugin {
             'userid' => $submission->userid,
             'files' => $files,
             'count' => count($files),
-            'json_files' => s(json_encode($files))
+            'json_files' => s(json_encode($files)),
         ];
 
         return $OUTPUT->render_from_template('assignsubmission_filepreview/view', $data);
@@ -462,8 +468,8 @@ class assign_submission_filepreview extends assign_submission_plugin {
                 'error_loading_text' => get_string('error_loading_text', 'assignsubmission_filepreview', '{$a}'),
                 'error_loading_image' => get_string('error_loading_image', 'assignsubmission_filepreview', '{$a}'),
                 'rotate_cw' => get_string('rotate_cw', 'assignsubmission_filepreview'),
-                'error_loading_script' => get_string('error_loading_script', 'assignsubmission_filepreview', '{$a}')
-            ]
+                'error_loading_script' => get_string('error_loading_script', 'assignsubmission_filepreview', '{$a}'),
+            ],
         ];
 
         $PAGE->requires->js_call_amd('assignsubmission_filepreview/viewer', 'init', [$config]);

@@ -19,9 +19,23 @@
 
     Renders the submission file preview summary in the grading table.
 
-    @package    assignsubmission_filepreview
-    @copyright  2024 Ferdiyanto Deni Sanjaya
-    @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+    Example context (json):
+    {
+        "submissionid": 1,
+        "userid": 2,
+        "count": 1,
+        "json_files": "[]",
+        "files": [
+            {
+                "filename": "document.pdf",
+                "filesize": "500KB",
+                "extension": "pdf",
+                "url": "#",
+                "downloadurl": "#",
+                "is_pdf": true
+            }
+        ]
+    }
 }}
 <div class="assignsubmission-filepreview-summary" data-submissionid="{{submissionid}}" data-userid="{{userid}}">
     <div class="filepreview-header d-flex align-items-center mb-1">

@@ -36,9 +36,8 @@ defined('MOODLE_INTERNAL') || die();
  * Privacy Subsystem for assignsubmission_filepreview.
  */
 class provider implements
-    \core_privacy\local\metadata\provider,
-    assignsubmission_provider {
-
+    assignsubmission_provider,
+    \core_privacy\local\metadata\provider {
     /**
      * Return meta data for this plugin.
      *

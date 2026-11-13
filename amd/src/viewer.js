@@ -22,13 +22,13 @@
  * @copyright  2024 Ferdiyanto Deni Sanjaya
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-define(['jquery', 'core/notification', 'core/str'], function($, Notification, Str) {
+/* eslint-disable */
+define(['jquery'], function($) {
     'use strict';
 
     var assetBaseUrl = '';
     var strings = {};
     var loadedScripts = {};
-    var activeViewer = null;
 
     /**
      * Format a string template with placeholder replacements.

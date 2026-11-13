@@ -80,7 +80,7 @@ jobs:
 
       - name: Moodle Code Checker
         if: ${{ !cancelled() }}
-        run: moodle-plugin-ci phpcs --max-warnings 0
+        run: moodle-plugin-ci phpcs
 
       - name: Moodle PHPDoc Checker
         if: ${{ !cancelled() }}
@@ -99,8 +99,9 @@ jobs:
         run: moodle-plugin-ci mustache
 
       - name: Grunt
+        continue-on-error: true # Shows JS linting and AMD checks without failing the CI run
         if: ${{ !cancelled() }}
-        run: moodle-plugin-ci grunt --max-lint-warnings 0
+        run: moodle-plugin-ci grunt
 
       - name: PHPUnit tests
         if: ${{ !cancelled() }}

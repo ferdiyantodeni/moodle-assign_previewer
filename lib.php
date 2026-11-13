@@ -86,10 +86,10 @@ function assignsubmission_filepreview_pluginfile($course, $cm, $context, $filear
 
     // Search file across both assignsubmission_filepreview and standard assignsubmission_file.
     $components = ['assignsubmission_filepreview', 'assignsubmission_file'];
-    $filenames_to_try = array_unique([$filename, $rawfilename, $decodedfilename, urldecode($rawfilename)]);
+    $filenamestotry = array_unique([$filename, $rawfilename, $decodedfilename, urldecode($rawfilename)]);
 
     foreach ($components as $comp) {
-        foreach ($filenames_to_try as $fname) {
+        foreach ($filenamestotry as $fname) {
             if (empty($fname)) {
                 continue;
             }
@@ -106,7 +106,7 @@ function assignsubmission_filepreview_pluginfile($course, $cm, $context, $filear
             $areafiles = $fs->get_area_files($context->id, $comp, $filearea, $itemid, 'timemodified DESC', false);
             foreach ($areafiles as $af) {
                 $afname = $af->get_filename();
-                foreach ($filenames_to_try as $fname) {
+                foreach ($filenamestotry as $fname) {
                     if (strcasecmp($afname, $fname) === 0) {
                         $file = $af;
                         break 3;
