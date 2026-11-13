@@ -188,7 +188,7 @@ define(['jquery'], function($) {
                 '<div class="fp-viewer-content"></div>' +
             '</div>' +
             '<div class="fp-viewer-footer">' +
-                '<span class="fp-copyright-text">Submission file previewer ver 1.0.7 developed by Ferdiyanto Deni Sanjaya (<a href="https://gridiyans.my.id" target="_blank" rel="noopener noreferrer">gridiyans.my.id</a>) &copy; 2026</span>' +
+                '<span class="fp-copyright-text">Submission file previewer ver 1.0.8 developed by Ferdiyanto Deni Sanjaya (<a href="https://gridiyans.my.id" target="_blank" rel="noopener noreferrer">gridiyans.my.id</a>) &copy; 2026</span>' +
             '</div>' +
         '</div>';
 
