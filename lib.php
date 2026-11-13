@@ -134,4 +134,3 @@ function assignsubmission_filepreview_pluginfile($course, $cm, $context, $filear
     send_stored_file($file, 0, 0, $forcedownload, $options);
     return true;
 }
-

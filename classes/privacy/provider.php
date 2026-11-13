@@ -125,4 +125,3 @@ class provider implements
         $fs->delete_area_files($context->id, 'assignsubmission_filepreview', 'submission_files', $submission->id);
     }
 }
-
